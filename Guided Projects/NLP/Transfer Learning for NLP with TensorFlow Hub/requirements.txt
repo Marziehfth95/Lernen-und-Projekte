@@ -1,0 +1,11 @@
+tensorflow==2.16.2
+tensorflow-hub==0.16.1
+tf-keras==2.16.0
+pandas==2.2.3
+numpy==1.26.4
+matplotlib==3.9.2
+scikit-learn==1.5.2
+jupyterlab==4.2.5
+tensorboard==2.16.2
+ipywidgets==8.1.5
+ipykernel==6.29.5

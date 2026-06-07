@@ -1,59 +1,158 @@
-## Transfer Learning for NLP with TensorFlow Hub
-Dieses Projekt basiert auf dem Coursera Kurs Transfer Learning for NLP with TensorFlow Hub von Snehan Kekre. Es handelt sich um ein praxisorientiertes, das sich auf die Anwendung von Transfer Learning für natürliche Sprachverarbeitung (NLP) mit TensorFlow und TensorFlow Hub konzentriert.
+# Transfer Learning for NLP with TensorFlow Hub
 
-#### Kursziele
-Nach Abschluss dieses Projekts man in der Lage ist:
+Dieses Projekt basiert auf dem Coursera Guided Project [Transfer Learning for NLP with TensorFlow Hub](https://www.coursera.org/projects/transfer-learning-nlp-tensorflow-hub). Die ursprüngliche Lernumgebung des Guided Projects wurde von mir in eine lokale, reproduzierbare und mit Docker ausführbare Entwicklungsumgebung überführt, damit das Projekt unabhängig von der Coursera Plattform in Cursor weiterentwickelt, nachvollzogen und eigenstaendig ausgebaut werden kann.
 
-- Vorgefertigte Text Embedding Modelle aus TensorFlow Hub zu verwenden.
+Ziel dieser Umsetzung war es, aus einem geführten Online Lab ein initiativer nutzbares Projekt zu machen: mit klarer Projektstruktur, wiederverwendbarer Container Konfiguration, JupyterLab-, TensorBoard- und CLI-Support sowie einer stabilen TensorFlow-Hub-Umgebung fuer eigenes Experimentieren und Weiterlernen.
 
-- Transfer Learning auf reale Textdaten anzuwenden und Modelle feinzujustieren.
+## Ausfuehrung in Void ohne Browser
 
-- Leistungsmetriken mit TensorBoard zu visualisieren und zu analysieren.
+Falls die Dev Container Integration in Void oder andere Umgebungen wie Cursor, VS Code usw. nicht vollständig funktioniert, kann man das Projekt direkt in Void mit einem lokalen Projekt Kernel ausführen. Dafür wird eine lokale `.venv` im Projektordner erstellt, die dieselben Python Abhängigkeiten wie die Docker Umgebung verwendet.
 
-- Verschiedene Modelle für Textklassifikation in TensorFlow zu erstellen, zu trainieren und zu evaluieren.
+```bash
+make local-setup
+```
 
-#### Voraussetzungen
-Um erfolgreich teilnehmen zu können:
+Danach im Notebook als Interpreter oder Kernel wählen:
 
-- Sicher im Umgang mit Python sein,
+- `Coursera TF Hub (Local)`
+- oder `.venv/bin/python`
 
-- Vertrautheit mit Deep Learning und NLP besitzen,
+Nicht verwenden:
 
-- Bereits Modelle mit TensorFlow oder der Keras API trainiert haben.
+- eine globale Homebrew-Python-Installation
+- das alte `tfhub_env`
+- andere projektfremde virtuelle Environments
 
-#### Kursstruktur
-Der Kurs besteht aus drei Hauptteilen:
+## Was enthalten ist
 
-* Course Overview: Einführung in Inhalte und Ziele.
+- Ein isolierter Docker Workspace für TensorFlow, TensorFlow Hub, JupyterLab und TensorBoard
+- Eine `.devcontainer`-Konfiguration für Cursor
+- Ein kleines Python Projekt unter `src/tfhub_lab/`
+- Eine Notebook Vorlage unter `notebooks/transfer_learning_nlp_tfhub.ipynb`
+- Ein CLI Trainingseinstieg über `python -m tfhub_lab.train`
 
-* Transfer Learning for NLP with TensorFlow Hub: Das praktische Projekt.
+## Warum diese Paket-Versionen
 
-* Graded Quiz: Abschließender Test zur Bewertung des Verständnisses.
+Das alte lokale `tfhub_env` in dem Workspace scheitert an der aktuellen Keras-/TF-Hub-Kombination. Deshalb pinnt dieses Projekt die Umgebung bewusst auf:
 
-#### Projektaufbau
+- `tensorflow==2.16.2`
+- `tensorflow-hub==0.16.1`
+- `tf-keras==2.16.0`
 
-Die praktische Arbeit im Projekt ist in folgende Aufgaben unterteilt:
+So vermeidet man den bekannten `tf_keras`-Importfehler und hat eine stabile Basis für `hub.KerasLayer`.
 
-* Einführung in das Projekt
+## Projektstruktur
 
-* Einrichtung der TensorFlow- und Colab-Umgebung
+```text
+coursera-transfer-learning-nlp-tfhub/
+├── .devcontainer/
+├── docker/
+├── notebooks/
+├── data/raw/
+├── artifacts/
+├── logs/
+├── src/tfhub_lab/
+├── Dockerfile
+├── docker-compose.yml
+├── Makefile
+└── requirements.txt
+```
+## Hinweis:
+Die Einrichtung von Docker Container für dieses Projekt wurde mit Hilfe Codex gemacht. 
 
-* Laden des Quora Insincere Questions Datensatzes
+## Daten vorbereiten
 
-- Verwendung von TensorFlow Hub für NLP
-5–6. Definition einer Funktion zum Erstellen und Kompilieren von Modellen
+Das Lab arbeitet mit dem Datensatz "Quora Insincere Questions". Lege die Datei `train.csv` hier ab:
 
-* Training verschiedener Textklassifikationsmodelle
+```text
+data/raw/train.csv
+```
 
-* Vergleich von Accuracy- und Loss-Kurven
+Erwartete Spalten:
 
-* Feinabstimmung eines Modells aus TF Hub
+- `question_text`
+- `target`
 
-* Training größerer Modelle und Visualisierung der Metriken mit TensorBoard
+## In Cursor öffnen
 
-#### Instruktor
-Snehan Kekre ist Machine Learning- und Data Science-Trainer und Absolvent der Minerva Schools at KGI in San Francisco. Seine Leidenschaft gilt der Vermittlung praxisnaher ML- und KI-Kenntnisse durch zugängliche, anwendungsorientierte Projekte.
+1. Öffne den Ordner `coursera-transfer-learning-nlp-tfhub` in Cursor.
+2. Stelle sicher, dass Docker Desktop läuft.
+3. Nutze in Cursor den Devcontainer Workflow:
+   - `Reopen in Container`
+4. Danach kann man direkt im Container mit allen installierten Abhängigkeiten arbeiten.
 
-#### Virtuelle Arbeitsumgebung
-Das Projekt bietet eine vorinstallierte virtuelle Entwicklungsumgebung, die alle notwendigen Tools enthält. Dadurch kannst du die Schritte des Kurses direkt nachvollziehen und aktiv mitarbeiten.
+## Ohne Cursor starten
 
+```bash
+make build
+make up
+make shell
+```
+
+## Jupyter Lab starten
+
+Container zuerst starten:
+
+```bash
+make up
+```
+
+Dann JupyterLab:
+
+```bash
+make notebook
+```
+
+Danach im Browser:
+
+- `http://localhost:8888`
+
+## TensorBoard starten
+
+```bash
+make tensorboard
+```
+
+Danach im Browser:
+
+- `http://localhost:6006`
+
+## Training ueber CLI
+
+Mit dem Standardmodell:
+
+```bash
+make train
+```
+
+Oder direkt:
+
+```bash
+python -m tfhub_lab.train \
+  --data-path /workspace/data/raw/train.csv \
+  --model-name nnlm_50d \
+  --epochs 3
+```
+
+Verfügbare Modelle:
+
+- `swivel_20d`
+- `nnlm_50d`
+- `nnlm_128d`
+- `nnlm_50d_finetune`
+
+## Typischer Arbeitsablauf für das Lab
+
+1. Datensatz nach `data/raw/train.csv` legen.
+2. Container in Cursor/Void öffnen.
+3. Notebook `notebooks/transfer_learning_nlp_tfhub.ipynb` starten.
+4. Erst kleine Embedding-Modelle vergleichen.
+5. Danach das feinjustierbare Modell `nnlm_50d_finetune` ausprobieren.
+6. Trainingsmetriken mit TensorBoard vergleichen.
+
+## Wichtige Pfade
+
+- Datensatz: `data/raw/train.csv`
+- Trainingsartefakte: `artifacts/`
+- TensorBoard-Logs: `logs/`
+- Python-Code: `src/tfhub_lab/`
