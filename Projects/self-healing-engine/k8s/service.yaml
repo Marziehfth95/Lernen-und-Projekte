@@ -1,0 +1,13 @@
+#Pods (die laufenden Container) bekommen in Kubernetes ständig neue interne IP-Adressen. 
+#Ein Service fungiert als fester Anlaufpunkt (Load Balancer), um den Traffic an die Pods zu leiten.
+apiVersion: v1
+kind: Service
+metadata:
+  name: victim-app-svc
+spec:
+  selector:
+    app: victim-app # Verbindet diesen Service mit unserem Deployment
+  ports:
+    - protocol: TCP
+      port: 80        # Der Port innerhalb des K8s-Clusters
+      targetPort: 8080 # Der Port, auf dem unsere Python-App läuft
