@@ -1,0 +1,21 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: victim-app-alerts
+  namespace: monitoring
+  labels:
+    release: prometheus-kube-prometheus # Wichtig, damit Prometheus die Regel automatisch findet
+spec:
+  groups:
+  - name: self-healing.rules
+    rules:
+    - alert: HighRestartRate
+      # Löst aus, wenn ein Pod der victim-app mehr als 3 mal neu gestartet ist
+      expr: kube_pod_container_status_restarts_total{namespace="default", container="victim-app"} > 3
+      for: 1m # Der Zustand muss für 1 Minute bestehen, um Fehlalarme zu vermeiden
+      labels:
+        severity: critical
+        action: rollback # Dieses Label nutzen wir später für unsere Engine!
+      annotations:
+        summary: "Victim App stürzt ab!"
+        description: "Der Pod hat mehr als 3 Neustarts. Self-Healing muss eingreifen!"
