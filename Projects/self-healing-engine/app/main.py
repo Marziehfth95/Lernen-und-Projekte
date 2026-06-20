@@ -7,7 +7,7 @@ is_healthy = True
 
 @app.route('/')
 def index():
-    return "Willkommen bei der Self-Healing Test-App!", 200
+    return "Willkommen bei der Self-Healing Test App!", 200
 
 @app.route('/health')
 def health():
