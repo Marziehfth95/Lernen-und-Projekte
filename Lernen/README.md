@@ -13,8 +13,8 @@ Hier kannst du alles sammeln, was du im Rahmen von strukturiertem Lernen bearbei
 
 ## Struktur
 
-- `tutorials/` fuer einzelne Tutorials und Guides
-- `training/` fuer Trainingsreihen, Kurse und Lernprogramme
+- `tutorials/` für einzelne Tutorials und Guides
+- `training/` für Trainingsreihen, Kurse und Lernprogramme
 
 ## Gute Regel
 
