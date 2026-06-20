@@ -99,7 +99,7 @@ Mit diesem Projekt lerne ich:
 
 Dieses Projekt wurde inspiriert durch die Codecademy Serie „Build an AI Image Classification Dashboard with Streamlit“ im Bereich Artificial Intelligence:
 
-Projects in AI – Codecademy
+Projects in AI Codecademy
 https://www.codecademy.com/projects/subject/artificial-intelligence
 
 Durch die Umsetzung dieses Labs könnte ich echte Skills für AI Deployment üben, Dashboard Design und Data Science Workflows in der Praxis.
