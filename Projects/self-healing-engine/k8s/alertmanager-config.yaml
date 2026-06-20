@@ -1,0 +1,17 @@
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: AlertmanagerConfig
+metadata:
+  name: self-healing-route
+  namespace: monitoring
+spec:
+  route:
+    receiver: 'python-engine'
+    matchers:
+      - name: alertname
+        value: HighRestartRate
+  receivers:
+    - name: 'python-engine'
+      webhookConfigs:
+        # host.docker.internal ist ein Trick für Docker Desktop.
+        # Damit kann Kubernetes (im Container) deinen Mac (den Host) erreichen, wo die Python-Engine läuft.
+        - url: 'http://host.docker.internal:5000/webhook'
