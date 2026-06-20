@@ -22,9 +22,9 @@ So werden Instabilitäten vorhergesagt und Deployments automatisch auf einen sta
 
 1. **Das Opfer (Victim App):** Ein leichtgewichtiger Python Webservice, der in Kubernetes läuft. Er bietet einen `/crash`-Endpoint, um kritische Fehler (HTTP 500) zu simulieren. 
 2. **Das Nervensystem (Observability):** Prometheus überwacht kontinuierlich den Cluster und trackt die Metrik `kube_pod_container_status_restarts_total`. 
-3. **Das Gehirn (AIOps Operator):** Eine maßgeschneiderte Python-Engine. Sie ruft alle 10 Sekunden Live Metriken über die Prometheus-API ab. 
-4. **Der Heilungs-Loop:** Die Live Daten werden in ein vortrainiertes **Isolation Forest ML-Modell** eingespeist. 
-Sagt das Modell eine Anomalie voraus, nutzt der Operator die K8s-API, um das Deployment automatisch auf ein stabiles Image (`v1`) zurückzurollen, ganz ohne manuellen Eingriff. [cite: 608, 644]
+3. **Das Gehirn (AIOps Operator):** Eine maßgeschneiderte Python-Engine. Sie ruft alle 10 Sekunden Live Metriken über die Prometheus API ab. 
+4. **Der Heilungs Loop:** Die Live Daten werden in ein vortrainiertes **Isolation Forest ML-Modell** eingespeist. 
+Sagt das Modell eine Anomalie voraus, nutzt der Operator die K8s-API, um das Deployment automatisch auf ein stabiles Image (`v1`) zurückzurollen, ganz ohne manuellen Eingriff. 
 
 ---
 
