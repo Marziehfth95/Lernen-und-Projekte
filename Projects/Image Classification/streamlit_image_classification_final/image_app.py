@@ -3,17 +3,17 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-# TODO: 
+ 
 import seaborn as sns 
-# TODO
+
 from PIL import Image
 import io
 from datetime import datetime
-# TODO
+
 import torch
 from transformers import pipeline
 
-# TODO: Configure matplotlib and seaborn styling
+# Configure matplotlib and seaborn styling
 #Entfernt alle vorher gesetzten Styles (z.b ggplot, dark_background)
 plt.style.use('default')
 #husl steht für eine gleichmäßig verteilte Farbskala im Farbraum. Farben sind:
@@ -43,7 +43,7 @@ if "classifier" not in st.session_state:
     st.session_state.classifier = None
 
 # TASK 4: Create model loading function with caching
-# TODO: Add @st.cache_resource decorator
+# Add @st.cache_resource decorator
 def load_image_classifier():
     """Ein vortrainiertes Modell für Image Classification laden
         Falls das fehlschlägt, dann Ersatzmodell laden """
@@ -103,22 +103,22 @@ def create_prediction_chart(predictions):
     if not predictions:
         return None
     
-    # TODO: Extract labels and scores from predictions
+    #Extract labels and scores from predictions
     labels = [pred['label'] for pred in predictions]  
     scores = [pred['score'] for pred in predictions]  
     
-    # TODO: Create matplotlib figure and axis
+    #Create matplotlib figure and axis
     fig, ax = plt.subplots(figsize=(10,6))  
     
-    # TODO: Create horizontal bar chart with colormap
+    #Create horizontal bar chart with colormap
     bars = ax.barh(labels, scores, color=plt.cm.viridis(np.array(scores))) 
     
-    # TODO: Customize the chart
+    #Customize the chart
     ax.set_xlabel('Confidence Score')  
     ax.set_title('Top Predictions')  
     ax.set_xlim(0, 1)  
     
-    # TODO: Add value labels on bars
+    # Add value labels on bars
     for i, bar in enumerate(bars):
         width = bar.get_width()
         ax.text(width + 0.01, bar.get_y() + bar.get_height()/2, 
@@ -151,21 +151,21 @@ def create_analytics_dashboard(analyzed_images):
     col1, col2, col3, col4 = st.columns(4)  
     
     with col1:
-        # TODO: Display total images metric
+        # Display total images metric
         st.metric("Total Images", len(analyzed_images)) 
     
     with col2:
-        # TODO: Display total predictions metric
+        #isplay total predictions metric
         st.metric("Total Predictions", len(df)) 
     
     with col3:
         avg_confidence = df['score'].mean()
-        # TODO: Display average confidence metric
+        # Display average confidence metric
         st.metric("Avg Confidence", f"{avg_confidence:.2%}")  
     
     with col4:
         top_class = df['label'].mode().iloc[0] if not df.empty else "None"
-        # TODO: Display most common class metric
+        # Display most common class metric
         st.metric("Most Common Class", top_class) 
     
     # TASK 17 & 18: Create visualizations
@@ -176,7 +176,7 @@ def create_analytics_dashboard(analyzed_images):
         class_counts = df['label'].value_counts().head(10)
         
         fig1, ax1 = plt.subplots(figsize=(8, 6))
-        # TODO: Create horizontal bar chart
+        #Create horizontal bar chart
         bars = ax1.barh(class_counts.index, class_counts.values, color='skyblue')
         ax1.set_xlabel('Count')
         ax1.set_title('Top 10 Predicted Classes')
@@ -188,13 +188,13 @@ def create_analytics_dashboard(analyzed_images):
                     f'{int(width)}', ha='left', va='center')
         
         plt.tight_layout()
-        # TODO: Display chart with st.pyplot
+        #Display chart with st.pyplot
         st.pyplot(fig1)  
     
     with col2:
         # TASK 18: Confidence distribution
         fig2, ax2 = plt.subplots(figsize=(8, 6))
-        # TODO: Create histogram
+        # Create histogram
         ax2.hist(df['score'], bins= 20, alpha=0.7, color='lightgreen', edgecolor='black')  
         ax2.set_xlabel('Confidence Score')
         ax2.set_ylabel('Count')
@@ -202,11 +202,11 @@ def create_analytics_dashboard(analyzed_images):
         ax2.grid(True, alpha=0.3)
         
         plt.tight_layout()
-        # TODO: Display chart with st.pyplot
+        #Display chart with st.pyplot
         st.pyplot(fig2)  
 
 # TASK 2: Create main header and description
-# TODO: Add main title with emoji
+#Add main title with emoji
 st.title(" AI Image Classification Dashboard") 
 
 # TODO: Add description using st.markdown
@@ -216,10 +216,10 @@ st.markdown(""" Classify images using state-of-the-art AI models from Hugging Fa
 
 # TASK 7: Create sidebar
 with st.sidebar:
-    # TODO: Add sidebar header
+    #Add sidebar header
     st.header(" Configuration")  
     
-    # TODO: Add model selection
+    #Add model selection
     model_option = st.selectbox(
         "Choose Model",
         [
@@ -228,7 +228,7 @@ with st.sidebar:
          ]
     ) 
     
-    # TODO: Add subheader and sliders
+    #Add subheader and sliders
     st.subheader("Classification Options")  
     top_k = st.slider("Top K Predictions", 1, 10, 5)  
     confidence_threshold = st.slider("Confidence Threshold", 0.0, 1.0, 0.1) 
@@ -241,59 +241,59 @@ with st.sidebar:
             st.session_state.model_loaded = True  
         
         if st.session_state.classifier:
-            # TODO: Show success message
+            #Show success message
             st.success(" Model loaded successfully!")  
         else:
-            # TODO: Show error message
+            #Show error message
             st.error(" Failed to load model")  
 
 
 # TASK 8: Create main tabs
-# TODO: Create three tabs
+#Create three tabs
 tab1, tab2, tab3 = st.tabs(["Single Image", "Image History", " Results & Analytics"])  
 
 # TASK 9, 10, 11: Single Image Tab
 with tab1:
-    # TODO: Add header
+    #Add header
     st.header("Single Image Classification")  
     
     # TASK 9: Add functionality for users to upload an image file from their computer and display it in the app
     uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"]) 
     
     if uploaded_file is not None:
-        # TODO: Open and display image
+        #Open and display image
         image = Image.open(uploaded_file) 
         col1, col2 = st.columns([1, 1]) 
         
         with col1:
-            # TODO: Display image
+            #Display image
             st.image(image, caption="Uploaded Image", use_container_width=True)  
         
         with col2:
-            # TASK 10: Classification button and logic
+            #Classification button and logic
             if st.button("Classify Image", type="primary", disabled=not st.session_state.model_loaded):
                 if not st.session_state.classifier:
                     st.error("Please load the model first!")
                 else:
                     with st.spinner("Classifying image..."):
-                        # TODO: Classify image
+                        #Classify image
                         predictions = classify_image(image, st.session_state.classifier, top_k) 
                         
                         if predictions:
-                            # TODO: Store results in session state
+                            #Store results in session state
                             image_data = {
                                 'name': uploaded_file.name,
                                 'predictions': predictions,
                                 'timestamp': datetime.now(),  
                                 'image': image
                             }
-                            # TODO: Append to analyzed_images
+                            # Append to analyzed_images
                             st.session_state.analyzed_images.append(image_data)  
                             
-                            # TASK 11: Display results
+                            #Display results
                             st.subheader(" Predictions")  
                             
-                            # TODO: Loop through predictions and display with emoji indicators
+                            # Loop through predictions and display with emoji indicators
                             for i, pred in enumerate(predictions):
                                 confidence_color = "🟢" if pred['score'] > confidence_threshold else "🟡"  
                                 st.write(f"{i+1}. {confidence_color} **{pred['label']}** - {pred['score']:.2%}")  # st.write(f"{i+1}. {confidence_color} **{pred['label']}** - {pred['score']:.2%}")
@@ -305,28 +305,28 @@ with tab1:
 
 # TASK 13, 14, 15: Image History Tab
 with tab2:
-    # TODO: Add header
+    #Add header
     st.header("Classification History")  
     
     # TASK 13: second tab to display all previously classified images.
     if st.session_state.analyzed_images:  
-        # TODO: Display count
+        #Display count
         st.write(f"Total classified images: {len(st.session_state.analyzed_images)}")  
         
         # TASK 14: Display previous classifications
-        # TODO: Loop through images in reverse order
+        #Loop through images in reverse order
         for idx, img_data in enumerate(reversed(st.session_state.analyzed_images)):  
             # TASK 15: Create expander with filename and timestamp
             with st.expander(f"{img_data['name']} - {img_data['timestamp'].strftime('%Y-%m-%d %H:%M:%S')}"):  
                 col1, col2 = st.columns([1, 2])  
                 
                 with col1:
-                    # TODO: Display image thumbnail
+                    # Display image thumbnail
                     st.image(img_data['image'], caption=img_data['name'], use_container_width=True)  
                 
                 with col2:
                     st.write("**Top Predictions:**")
-                    # TODO: Display top 3 predictions
+                    #Display top 3 predictions
                     for i, pred in enumerate(img_data['predictions'][:3]):  
                         st.write(f"{i+1}. **{pred['label']}** - {pred['score']:.2%}")
     else:
@@ -335,17 +335,17 @@ with tab2:
 
 # TASK 16, 17, 18, 19, 20, 21: Results & Analytics Tab
 with tab3:
-    # TODO: Add header
+    #Add header
     st.header("Results & Analytics")  
     # TODO: Call analytics dashboard function
     create_analytics_dashboard(st.session_state.analyzed_images) 
     
     # TASK 19, 20: Detailed results table and export
     if st.session_state.analyzed_images:
-        # TODO: Add markdown header
+        #Add markdown header
         st.markdown("###  Detailed Results")  
         
-        # TODO: Create detailed dataframe
+        #Create detailed dataframe
         detailed_results = []
         for img_data in st.session_state.analyzed_images:
             top_pred = img_data['predictions'][0]
@@ -357,13 +357,13 @@ with tab3:
             })
         
         results_df = pd.DataFrame(detailed_results)
-        # TODO: Display dataframe
+        #Display dataframe
         st.dataframe(results_df, use_container_width=True, hide_index=True)  
         
         # TASK 20: Download functionality
         csv_buffer = io.StringIO()
         results_df.to_csv(csv_buffer, index=False)
-        # TODO: Add download button
+        #Add download button
         st.download_button(
             label="📥 Download Results as CSV",
             data=csv_buffer.getvalue(),
@@ -373,7 +373,7 @@ with tab3:
         
         # TASK 21: Clear results functionality
         if st.button(" Clear All Results", type="secondary"):  
-            # TODO: Clear analyzed_images and rerun
+            # Clear analyzed_images and rerun
             st.session_state.analyzed_images = []  # []
             st.rerun() 
 
