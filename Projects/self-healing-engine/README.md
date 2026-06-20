@@ -39,7 +39,7 @@ Sagt das Modell eine Anomalie voraus, nutzt der Operator die K8s-API, um das Dep
 
 ## Lokales Setup & Reproduktion
 
-Möchtest du diese KI-Engine lokal ausführen? Folge diesen Schritten:
+Wie kann man diese KI Engine lokal ausführen? 
 
 ### 1. Cluster & Observability Stack starten
 ```bash
