@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: victim-app
-        image: victim-app:v1
+        image: victim-app:v2
         imagePullPolicy: Never # WICHTIG: Sagt K8s, dass es unser lokales Image nutzen soll
         ports:
         - containerPort: 8080
