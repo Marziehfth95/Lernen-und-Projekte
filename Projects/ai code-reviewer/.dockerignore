@@ -1,0 +1,5 @@
+.venv
+.env
+private-key.pem
+chroma_db/
+__pycache__/

@@ -1,0 +1,52 @@
+name: Deploy to Google Cloud Run
+
+on:
+  push:
+    branches:
+      - main # Pipeline startet, sobald du Code in den main-Branch pushst
+
+env:
+  PROJECT_ID: dein-gcp-projekt-id
+  SERVICE_NAME: ai-code-reviewer
+  REGION: europe-west3 # Frankfurt
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    # Authentifizierung bei Google Cloud (Benötigt Secrets in GitHub)
+    - name: Authenticate to Google Cloud
+      uses: google-github-actions/auth@v2
+      with:
+        credentials_json: '${{ secrets.GCP_SA_KEY }}'
+
+    - name: Set up Cloud SDK
+      uses: google-github-actions/setup-gcloud@v2
+
+    - name: Configure Docker to use Google Artifact Registry
+      run: gcloud auth configure-docker europe-west3-docker.pkg.dev
+
+    # Docker Image bauen und in die Google Cloud pushen
+    - name: Build and Push Docker Image
+      run: |
+        IMAGE=europe-west3-docker.pkg.dev/$PROJECT_ID/my-repo/$SERVICE_NAME:${{ github.sha }}
+        docker build -t $IMAGE .
+        docker push $IMAGE
+
+    # Deployment auf Cloud Run
+    - name: Deploy to Cloud Run
+      run: |
+        IMAGE=europe-west3-docker.pkg.dev/$PROJECT_ID/my-repo/$SERVICE_NAME:${{ github.sha }}
+        gcloud run deploy $SERVICE_NAME \
+          --image $IMAGE \
+          --region $REGION \
+          --platform managed \
+          --allow-unauthenticated \
+          --set-env-vars GITHUB_WEBHOOK_SECRET=${{ secrets.WEBHOOK_SECRET }} \
+          --set-env-vars GITHUB_APP_ID=${{ secrets.APP_ID }} \
+          --set-env-vars ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_KEY }}
+          # Hinweis: Den private-key.pem musst du idealerweise in Google Secret Manager legen!
