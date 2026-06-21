@@ -1,7 +1,7 @@
 # Projects
 
-Hier liegen deine eigentlichen Projekte.
-Also Arbeiten, die du bewusst als vollstaendige eigene Projekte praesentieren willst.
+Hier liegen die eigentlichen Projekte.
+Also Arbeiten, die ich bewusst als vollständige eigene Projekte präsentieren will.
 
 ## Ziel
 
@@ -10,7 +10,7 @@ Dieser Bereich soll zeigen:
 - eigene Ideen
 - echte Umsetzung
 - Struktur und Produktdenken
-- praesentierbare Ergebnisse fuer GitHub und Resume
+- präsentierbare Ergebnisse für GitHub und Resume
 
 ## Aktuelle Beispielbereiche
 
