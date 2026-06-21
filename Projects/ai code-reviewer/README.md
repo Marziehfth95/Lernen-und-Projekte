@@ -4,7 +4,7 @@ Ein fortschrittlicher, event-gesteuerter Code-Review-Assistent, der tief in GitH
 
 Entwickelt, um moderne Platform Engineering, Applied AI und MLOps Praktiken zu demonstrieren.
 
-## ✨ Kernfunktionen (Key Features)
+## Kernfunktionen (Key Features)
 
 **RAGmbasiertes Langzeitgedächtnis (Memory):** Nutzt ChromaDB, um vergangene Code-Fehler (Issues) und deren Lösungen als Vektor-Embeddings zu speichern. Bei neuen Pull Requests prüft das System historisches Wissen ab und warnt Entwickler aktiv davor, denselben Fehler zweimal zu machen.
 **Enterprise-Grade Security:** Implementiert den Branchenstandard für GitHub-Authentifizierung. Anstelle von statischen Personal Access Tokens (PATs) agiert der Bot als vollwertige **GitHub App**. Die Authentifizierung erfolgt hochsicher über asymmetrische Kryptographie (`.pem` Private Keys) und dynamische JWT-Tokens.
