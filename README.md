@@ -1,12 +1,12 @@
 # Lernen und Projekte
 
-Ein sauber strukturiertes Portfolio-Repository fuer GitHub und den Lebenslauf.
+Ein sauber strukturiertes Repository für GitHub und den Lebenslauf.
 Es ist bewusst einfach aufgebaut, damit neue Arbeiten aus VS Code schnell,
 logisch und ohne Chaos einsortiert werden koennen.
 
 ## Struktur
 
-Dieses Repository hat drei Hauptbereiche:
+Dieses Repository hat zwei Hauptbereiche:
 
 - `Lernen/` fuer Tutorials, Kurse und begleitendes Training
 - `Projects/` fuer komplette eigene Projekte mit echtem Showcase Charakter
