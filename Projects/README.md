@@ -10,14 +10,15 @@ Dieser Bereich soll zeigen:
 - eigene Ideen
 - echte Umsetzung
 - Struktur und Produktdenken
-- präsentierbare Ergebnisse für GitHub und Resume
+- präsentierbare Ergebnisse für GitHub
 
 ## Aktuelle Beispielbereiche
 
-- `portfolio-website/`
-- `taskflow-api/`
-- `analytics-dashboard/`
+- `Image Classification/`
+- `Transfer Learning for NLP/`
+- `AI Code-Reviewer/`
+- `Self-healing-engine/`
 
 ## Gute Regel
 
-Wenn etwas als eigenstaendiges Projekt vorgestellt werden kann, kommt es in `Projects/`.
+Wenn etwas als eigenständiges Projekt vorgestellt werden kann, kommt es in `Projects/`.
