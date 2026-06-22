@@ -1,7 +1,7 @@
 # Lernen
 
 Dieser Bereich ist fuer Tutorials, Kurse und Lernpfade gedacht.
-Hier kannst du alles sammeln, was du im Rahmen von strukturiertem Lernen bearbeitest.
+Hier kann ich alles sammeln, was ich im Rahmen von strukturiertem Lernen bearbeitest.
 
 ## Was hier hineinpasst
 
@@ -14,7 +14,6 @@ Hier kannst du alles sammeln, was du im Rahmen von strukturiertem Lernen bearbei
 ## Struktur
 
 - `tutorials/` für einzelne Tutorials und Guides
-- `training/` für Trainingsreihen, Kurse und Lernprogramme
 
 ## Gute Regel
 
