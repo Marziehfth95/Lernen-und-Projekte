@@ -106,7 +106,7 @@ def check_memory_for_similar_issues(issue_description: str):
     if results['documents'] and len(results['documents'][0]) > 0:
         metadata = results['metadatas'][0][0] if results['metadatas'] else {"pr": "unbekannt"}
         past_pr = metadata.get("pr", "unbekannt")
-        return f"🧠 *Memory-Check: Dieser Fehler wurde bereits in PR #{past_pr} gemacht. Bitte achte in Zukunft darauf!*"
+        return f" *Memory-Check: Dieser Fehler wurde bereits in PR #{past_pr} gemacht. Bitte achte in Zukunft darauf!*"
     
     return None
 
@@ -149,7 +149,7 @@ async def github_webhook(request: Request, x_hub_signature_256: str = Header(Non
         review_results = analyze_code_with_claude(diff[:8000])
         print(f"DEBUG: Gefundene Fehler: {review_results}")
         
-        comment_body = "🤖 **AI Code Review:**\n\n"
+        comment_body = " **AI Code Review:**\n\n"
         
         # 2. Gedächtnis abfragen & Ergebnisse aufbauen
         for issue in review_results.get("issues", []):
@@ -177,17 +177,17 @@ async def github_webhook(request: Request, x_hub_signature_256: str = Header(Non
                     # Pushe die Änderung als neuen Commit direkt in den PR-Branch!
                     repo.update_file(
                         file_obj.path,
-                        message=f"🤖 AI Auto-Fix: {desc}",
+                        message=f" AI Auto-Fix: {desc}",
                         content=new_content,
                         sha=file_obj.sha,
                         branch=branch_name
                     )
-                    comment_body += f"  - ✅ **Auto-Fix angewendet:** Code wurde korrigiert und gepusht!\n"
+                    comment_body += f"  - **Auto-Fix angewendet:** Code wurde korrigiert und gepusht!\n"
                 else:
-                    comment_body += f"  - ⚠️ **Fix-Vorschlag:** `{issue['suggested_fix']}` (Konnte nicht automatisch angewendet werden)\n"
+                    comment_body += f"  - **Fix-Vorschlag:** `{issue['suggested_fix']}` (Konnte nicht automatisch angewendet werden)\n"
             except Exception as e:
                 logger.error(f"Auto-Fix fehlgeschlagen für {issue['file']}: {e}")
-                comment_body += f"  - 💡 **Fix-Vorschlag:** `{issue['suggested_fix']}`\n"
+                comment_body += f"  - **Fix-Vorschlag:** `{issue['suggested_fix']}`\n"
             # ==============================
 
             if memory_warning:
