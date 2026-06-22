@@ -32,10 +32,3 @@ Die Idee dahinter ist einfach:
 - In `Projects/` kommt alles hinein, was als vollständiges Projekt präsentiert werden soll.
 
 
-
-
-
-## Positioning
-
-Dieses Repository zeigt nicht nur fertige Ergebnisse, sondern auch Disziplin,
-Lernfaehigkeit und Struktur. Genau das macht es stark fuer Bewerbungen.
