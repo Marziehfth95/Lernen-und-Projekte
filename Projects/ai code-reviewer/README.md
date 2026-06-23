@@ -6,7 +6,7 @@ Zusätzlich bietet das System eine **MCP (Model Context Protocol)** Schnittstell
 
 Entwickelt, um moderne Platform Engineering, MLOps und Agentic AI Praktiken zu demonstrieren.
 
-## ✨ Kernfunktionen (Key Features)
+## Kernfunktionen (Key Features)
 
 * 🛠️ **Self Healing Deployments (Auto-Fixing):** Der Bot belässt es nicht bei Kommentaren. Generiert die KI einen sicheren Fix für eine Schwachstelle (z. B. SQL Injection), nutzt das System die GitHub API, um den fehlerhaften Code automatisch zu ersetzen und als neuen Commit in den Branch zu pushen.
 **RAG & Memory Consolidation (Nightly Cron):** Nutzt ChromaDB, um vergangene Code Fehler als Vektor Embeddings zu speichern. Ein nächtlicher GitHub Actions Cron-Job ("Dreaming Phase") fasst ähnliche Fehler über LLMs zu übergeordneten Meta Regeln zusammen, um die Datenbank effizient und klein zu halten.
