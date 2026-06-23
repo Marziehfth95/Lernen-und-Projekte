@@ -8,7 +8,7 @@ Entwickelt, um moderne Platform Engineering, MLOps und Agentic AI Praktiken zu d
 
 ## Kernfunktionen (Key Features)
 
-* 🛠️ **Self Healing Deployments (Auto-Fixing):** Der Bot belässt es nicht bei Kommentaren. Generiert die KI einen sicheren Fix für eine Schwachstelle (z. B. SQL Injection), nutzt das System die GitHub API, um den fehlerhaften Code automatisch zu ersetzen und als neuen Commit in den Branch zu pushen.
+**Self Healing Deployments (Auto-Fixing):** Der Bot belässt es nicht bei Kommentaren. Generiert die KI einen sicheren Fix für eine Schwachstelle (z. B. SQL Injection), nutzt das System die GitHub API, um den fehlerhaften Code automatisch zu ersetzen und als neuen Commit in den Branch zu pushen.
 **RAG & Memory Consolidation (Nightly Cron):** Nutzt ChromaDB, um vergangene Code Fehler als Vektor Embeddings zu speichern. Ein nächtlicher GitHub Actions Cron-Job ("Dreaming Phase") fasst ähnliche Fehler über LLMs zu übergeordneten Meta Regeln zusammen, um die Datenbank effizient und klein zu halten.
 **Model Context Protocol (MCP) Server:** Stellt das lokale Wissen der Vektordatenbank über das neue MCP-Protokoll von Anthropic bereit. Tech Leads können über ihre lokale Claude Desktop App direkt abfragen: *"Welche Code Fehler hat das Team diese Woche am häufigsten gemacht?"*
 **Cloud-Native & CI/CD:** Das Webhook Backend ist vollständig containerisiert (Docker) und wird über eine GitHub Actions CI/CD-Pipeline automatisiert als zustandsloser Container auf **Google Cloud Run** deployt.
