@@ -6,6 +6,7 @@ import requests
 from fastapi import FastAPI, Request, HTTPException, Header
 from dotenv import load_dotenv
 from github import Github, GithubIntegration
+from fastapi import BackgroundTasks
 import chromadb
 import anthropic
 
@@ -16,6 +17,9 @@ GITHUB_APP_ID = int(os.getenv("GITHUB_APP_ID"))
 
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
 claude_client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
+
+# Neue Umgebungsvariable für den nächtlichen Job
+CRON_SECRET = os.getenv("CRON_SECRET", "super-geheimes-lokales-passwort")
 
 # 2. Initialisierung & Gedächtnis (Memory)
 logging.basicConfig(level=logging.INFO)
@@ -197,3 +201,92 @@ async def github_webhook(request: Request, x_hub_signature_256: str = Header(Non
             save_issue_to_memory(desc, pr_number)
         
     return {"status": "success"}
+
+def consolidate_memory():
+    """Das ist der eigentliche 'Traum'. Hier passiert die schwere Offline-Arbeit."""
+    logger.info("💤 Bot beginnt zu träumen (Memory Consolidation)...")
+    
+    try:
+        # 1. Alle aktuellen Erinnerungen aus der Vektordatenbank holen
+        all_memories = memory_collection.get()
+        documents = all_memories.get("documents", [])
+        ids = all_memories.get("ids", [])
+        
+        # Wenn wir weniger als 3 Fehler haben, lohnt sich das Zusammenfassen noch nicht
+        if not documents or len(documents) < 3:
+            logger.info("Zu wenige neue Erinnerungen. Der Bot schläft traumlos weiter.")
+            return
+
+        logger.info(f"Analysiere {len(documents)} Erinnerungen...")
+
+        # 2. Claude bitten, die Fehler zu "Meta-Wissen" zusammenzufassen
+        system_prompt = """Du bist das Unterbewusstsein eines Senior Code Reviewers. 
+        Deine Aufgabe ist "Memory Consolidation" (Wissenskomprimierung).
+        Lies die Liste der vergangenen Code-Fehler und erkenne Muster. Fasse ähnliche Fehler zu übergeordneten "Meta-Regeln" zusammen.
+        
+        Antworte AUSSCHLIESSLICH mit einem validen JSON in diesem Format:
+        {
+            "meta_rules": [
+                "Generelle Regel 1 basierend auf den Fehlern",
+                "Generelle Regel 2..."
+            ]
+        }
+        """
+        
+        user_prompt = f"Hier sind die Fehler der letzten Zeit:\n{json.dumps(documents, indent=2)}"
+
+        response = claude_client.messages.create(
+            model="claude-3-5-sonnet-20241022",
+            max_tokens=1500,
+            temperature=0.3, # Etwas Kreativität erlaubt, um Muster zu erkennen
+            system=system_prompt,
+            messages=[{"role": "user", "content": user_prompt}]
+        )
+        
+        # JSON bereinigen und parsen
+        response_text = response.content[0].text.strip()
+        if response_text.startswith("```json"):
+            response_text = response_text[7:-3].strip()
+        elif response_text.startswith("```"):
+            response_text = response_text[3:-3].strip()
+            
+        meta_knowledge = json.loads(response_text)
+        new_rules = meta_knowledge.get("meta_rules", [])
+        
+        if new_rules:
+            # 3. Alte, unwichtige Duplikate aus der Datenbank löschen
+            memory_collection.delete(ids=ids)
+            
+            # 4. Das neue, kompakte Meta-Wissen abspeichern
+            new_ids = [f"meta_{hashlib.md5(rule.encode()).hexdigest()[:8]}" for rule in new_rules]
+            
+            # Wir markieren diese neuen Einträge mit dem Metadatum "type": "meta_rule"
+            memory_collection.add(
+                documents=new_rules,
+                metadatas=[{"type": "meta_rule", "pr": "System-Dream"}] * len(new_rules),
+                ids=new_ids
+            )
+            logger.info(f"✨ Traumphase beendet! {len(ids)} alte Fehler gelöscht und zu {len(new_rules)} kompakten Meta-Regeln komprimiert.")
+        else:
+            logger.info("Keine Muster erkannt. Gedächtnis bleibt unverändert.")
+
+    except json.JSONDecodeError as e:
+        logger.error(f"Traum war unklar (JSON Fehler von Claude): {e}")
+    except Exception as e:
+        logger.error(f"Ein Albtraum ist aufgetreten (Systemfehler): {e}")
+@app.post("/system/dream")
+async def trigger_dream_sequence(
+    background_tasks: BackgroundTasks, 
+    authorization: str = Header(None)
+):
+    """Dieser Endpunkt wird jede Nacht von GitHub Actions aufgerufen."""
+    
+    # 1. Sicherheits-Check: Ist das wirklich unser Cron-Job?
+    expected_token = f"Bearer {CRON_SECRET}"
+    if authorization != expected_token:
+        raise HTTPException(status_code=401, detail="Zugriff verweigert. Nur für Träumer.")
+    
+    # 2. Den Traum im Hintergrund starten, damit GitHub nicht warten muss
+    background_tasks.add_task(consolidate_memory)
+    
+    return {"status": "Träume süß! Offline-Prozess gestartet."}

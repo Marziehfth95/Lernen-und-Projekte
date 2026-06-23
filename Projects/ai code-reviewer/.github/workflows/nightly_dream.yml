@@ -1,0 +1,21 @@
+name: Nightly AI Memory Consolidation
+
+on:
+  schedule:
+    # Jeden Tag um 03:00 Uhr nachts (UTC)
+    - cron: '0 3 * * *'
+  
+  # Erlaubt uns, den Job auch manuell per Button im GitHub-Interface zu starten (super zum Testen!)
+  workflow_dispatch: 
+
+jobs:
+  dream-sequence:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Wake up the AI to dream
+        run: |
+          # Ersetze die URL später durch deine echte Google Cloud Run URL!
+          curl -X POST "https://DEINE-CLOUD-RUN-URL.com/system/dream" \
+          -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+          -H "Content-Type: application/json"

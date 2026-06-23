@@ -1,45 +1,51 @@
-# AI Code Review Bot (mit RAG & Langzeitgedächtnis)
+# AI Code Review Agent (RAG Memory, Self-Healing & MCP)
 
-Ein fortschrittlicher, event-gesteuerter Code-Review-Assistent, der tief in GitHub integriert ist. Dieses Projekt nutzt modernste **LLMs (Anthropic Claude)** für semantische Code-Analysen und eine **Vektordatenbank (ChromaDB)** als Langzeitgedächtnis, um Entwickler kontextbezogen auf wiederkehrende Fehler hinzuweisen.
+Ein fortschrittlicher, event gesteuerter AI Agent, der tief in GitHub integriert ist. Dieses Projekt nutzt modernste **LLMs (Anthropic Claude)** für semantische Code Analysen, eine **Vektordatenbank (ChromaDB)** als Langzeitgedächtnis und **Auto Remediation (Self Healing)**, um fehlerhaften Code automatisch zu reparieren. 
 
-Entwickelt, um moderne Platform Engineering, Applied AI und MLOps Praktiken zu demonstrieren.
+Zusätzlich bietet das System eine **MCP (Model Context Protocol)** Schnittstelle, über die externe KI Clients (wie Claude Desktop) das konsolidierte Wissen des Teams abfragen können.
+
+Entwickelt, um moderne Platform Engineering, MLOps und Agentic AI Praktiken zu demonstrieren.
 
 ## ✨ Kernfunktionen (Key Features)
 
-**RAGmbasiertes Langzeitgedächtnis (Memory):** Nutzt ChromaDB, um vergangene Code-Fehler (Issues) und deren Lösungen als Vektor-Embeddings zu speichern. Bei neuen Pull Requests prüft das System historisches Wissen ab und warnt Entwickler aktiv davor, denselben Fehler zweimal zu machen.
-**Enterprise-Grade Security:** Implementiert den Branchenstandard für GitHub-Authentifizierung. Anstelle von statischen Personal Access Tokens (PATs) agiert der Bot als vollwertige **GitHub App**. Die Authentifizierung erfolgt hochsicher über asymmetrische Kryptographie (`.pem` Private Keys) und dynamische JWT-Tokens.
-**Event-Driven Architecture:** Ein lokaler FastAPI-Server lauscht asynchron auf GitHub Webhooks in Echtzeit. Ausgelöst durch Events wie `pull_request opened` oder `synchronize`.
-**Deep Semantic Analysis:** Nutzt Anthropics Claude-3 Modelle (Haiku/Sonnet), um Code-Diffs zu analysieren, Refactoring-Vorschläge zu generieren und direkte Kommentare (mit Line-References) in den GitHub PR zu posten.
+* 🛠️ **Self Healing Deployments (Auto-Fixing):** Der Bot belässt es nicht bei Kommentaren. Generiert die KI einen sicheren Fix für eine Schwachstelle (z. B. SQL Injection), nutzt das System die GitHub API, um den fehlerhaften Code automatisch zu ersetzen und als neuen Commit in den Branch zu pushen.
+**RAG & Memory Consolidation (Nightly Cron):** Nutzt ChromaDB, um vergangene Code Fehler als Vektor Embeddings zu speichern. Ein nächtlicher GitHub Actions Cron-Job ("Dreaming Phase") fasst ähnliche Fehler über LLMs zu übergeordneten Meta Regeln zusammen, um die Datenbank effizient und klein zu halten.
+**Model Context Protocol (MCP) Server:** Stellt das lokale Wissen der Vektordatenbank über das neue MCP-Protokoll von Anthropic bereit. Tech Leads können über ihre lokale Claude Desktop App direkt abfragen: *"Welche Code Fehler hat das Team diese Woche am häufigsten gemacht?"*
+**Cloud-Native & CI/CD:** Das Webhook Backend ist vollständig containerisiert (Docker) und wird über eine GitHub Actions CI/CD-Pipeline automatisiert als zustandsloser Container auf **Google Cloud Run** deployt.
+**Enterprise Grade Security:** Der Bot agiert als vollwertige **GitHub App** (kein PAT). Die Authentifizierung erfolgt hochsicher über asymmetrische Kryptographie (`.pem` Private Keys) und dynamische JWT-Tokens.
 
-## Systemarchitektur
+##  Systemarchitektur
 
-Der Datenfluss ist als ereignisgesteuerte Pipeline (Event-Driven Pipeline) konzipiert:
+Das System besteht aus drei verteilten Hauptkomponenten:
 
 ```text
-[ GitHub PR Event ] ──(Webhook)──> [ FastAPI Server ]
+1. THE WEBHOOK AGENT (Push) - Läuft in der Cloud
+[ GitHub PR Event ] ──(Webhook)──> [ FastAPI Server (Cloud Run) ]
                                           │
-                                          ▼
-[ GitHub App Auth ] <──(JWT/PEM)── [ PyGithub Client ] ──> Fetch PR Diff
+                                   [ Claude 3.5 Sonnet ] ──> Semantic Analysis & Fix
                                           │
-                                          ▼
-                                   [ Claude 3 API ] ──> Semantic Code Analysis
+[ GitHub PR Thread ] <──(GIT PUSH)─[ Auto-Commit: Fehlerhafter Code wird ersetzt ]
+
+2. THE NIGHTLY CONSOLIDATION (Cron) - Läuft via GitHub Actions
+[ 03:00 AM Trigger ] ──(Auth)──> [ /system/dream Endpoint ]
                                           │
-                                          ▼
-[ ChromaDB Vektor DB ] <──(RAG)─── [ Memory Check ] ──> Ähnliche Fehler suchen?
+[ ChromaDB Vektor DB ] <──(LLM)─── [ Komprimiert Fehler zu Meta-Regeln ]
+
+3. THE MCP SERVER (Pull) - Läuft lokal für Entwickler
+[ Claude Desktop App ] ──(stdio)──> [ MCP Server (mcp_server.py) ]
                                           │
-                                          ▼
-[ GitHub PR Thread ] <──(POST)──── [ Automatischer Kommentar & Fix ]
+[ Tech-Lead Prompt ] <──(JSON)───── [ ChromaDB Read ] (Gibt Team-Fehler aus)
 ```
 ## Tech Stack
-Backend: Python 3.12, FastAPI, Uvicorn (ASGI)
+Backend & API: Python 3.12, FastAPI, Uvicorn, MCP SDK
 
-AI / LLM: Anthropic API (Claude 3.5 Sonnet / Claude 3 Haiku)
+AI / LLM: Anthropic API (Claude 3.5 Sonnet)
 
-Vektordatenbank: ChromaDB (Lokale Persistenz)
+Vektordatenbank (RAG): ChromaDB
 
-Integration: PyGithub, GitHub Apps API, Webhooks
+DevOps & Cloud: Docker, Google Cloud Run, GitHub Actions (CI/CD, Cron)
 
-Infrastruktur / Testing: Ngrok (Secure Tunnels), python-dotenv
+Integration: PyGithub, GitHub Apps API, Webhooks, Ngrok
 
 ## Installation & Lokales Setup
 1. Repository klonen & Abhängigkeiten installieren
@@ -47,30 +53,45 @@ Infrastruktur / Testing: Ngrok (Secure Tunnels), python-dotenv
 git clone [https://github.com/DEIN_USERNAME/ai-reviewer-test.git](https://github.com/DEIN_USERNAME/ai-reviewer-test.git)
 cd ai-reviewer-test
 python -m venv .venv
-# Windows: .venv\Scripts\activate
-source .venv/bin/activate  
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
 2. Umgebungsvariablen konfigurieren
-Erstelle eine .env Datei im Hauptverzeichnis mit folgendem Inhalt:
+Erstelle eine .env Datei im Hauptverzeichnis:
+
 ```Ini, TOML
 GITHUB_WEBHOOK_SECRET=dein_geheimes_webhook_passwort
 GITHUB_APP_ID=123456
 ANTHROPIC_API_KEY=sk-ant-api03-...
+CRON_SECRET=super-geheimes-passwort-fuer-memory-consolidation
 ```
 
-3. GitHub App Private Key hinzufügen
-Speichere den generierten RSA Private Key deiner GitHub App exakt unter dem Namen private-key.pem im Hauptverzeichnis. (Hinweis: Diese Datei ist aus Sicherheitsgründen in der .gitignore hinterlegt und wird niemals gepusht).
+3. Server starten (Webhooks & RAG)
+Starte den lokalen ASGI-Server und den Ngrok-Tunnel:
 
-4. Server & Webhook starten
-Starte den lokalen ASGI-Server:
-```bash
+```Bash
 uvicorn main:app --reload
+ngrok http 8000
 ```
+4. MCP Server in Claude Desktop integrieren
+Füge diesen Block zu deiner claude_desktop_config.json hinzu, um Claude Zugriff auf das Team-Gedächtnis zu geben:
 
+```JSON
+{
+  "mcpServers": {
+    "team-memory-db": {
+      "command": "/absoluter/pfad/zu/deinem/.venv/bin/python",
+      "args": [
+        "/absoluter/pfad/zu/deinem/mcp_server.py"
+      ]
+    }
+  }
+}
+```
 ## Future Roadmap
+* Multi-Model Fallback: Fallback-Logik implementieren (Wechsel zu OpenAI GPT-4o), falls Anthropic Rate-Limits erreicht werden.
 
-* Multi-Model Support: Fallback Logik implementieren (z.B. Wechsel zu OpenAI GPT-4o), falls Anthropic Rate Limits erreicht werden.
+* Metrics Dashboard: Anbindung an Prometheus & Grafana, um zu tracken, wie viele Bugs das System erfolgreich repariert hat.
 
-* Containerisierung: Das FastAPI Backend in ein Docker Image verpacken und eine CI/CD Pipeline für das Deployment auf AWS ECS oder Google Cloud Run aufbauen.
+* Slack/Teams Integration: Echtzeit-Benachrichtigungen an Entwicklerteams über neu gelernte Meta-Regeln aus der nächtlichen Traumphase.
