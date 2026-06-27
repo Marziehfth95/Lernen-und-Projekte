@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: finops-agent
+  labels:
+    app: finops-agent
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: finops-agent
+  template:
+    metadata:
+      labels:
+        app: finops-agent
+    spec:
+      containers:
+      - name: ai-container
+        image: finops-agent:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8000
+        env:
+          - name: GROQ_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: ai-secrets
+                key: GROQ_API_KEY
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "100m"
+          limits:
+            memory: "128Mi" # 🚨 ABSICHTLICH ZU WENIG RAM FÜR PANDAS! 🚨
+            cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: finops-service
+spec:
+  selector:
+    app: finops-agent
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8000
+  type: ClusterIP

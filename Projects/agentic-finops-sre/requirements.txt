@@ -1,0 +1,8 @@
+pandas
+matplotlib
+langgraph
+langchain-groq
+fastapi
+uvicorn
+python-dotenv
+pydantic
