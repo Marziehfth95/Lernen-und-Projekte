@@ -20,8 +20,8 @@ Lernen-und-Projekte/
 `-- Projects/
     |-- Image Classification/
     |-- Transfer Learning for NLP/
-    |--AI Code-reviewer/
-    |--agentic-finops/
+    |-- AI Code-reviewer/
+    |-- agentic-finops/
     `-- Self-Healing Engine/
 ```
 
