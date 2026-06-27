@@ -21,6 +21,7 @@ Lernen-und-Projekte/
     |-- Image Classification/
     |-- Transfer Learning for NLP/
     |--AI Code-reviewer/
+    |--agentic-finops/
     `-- Self-Healing Engine/
 ```
 
