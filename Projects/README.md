@@ -18,6 +18,7 @@ Dieser Bereich soll zeigen:
 - `Transfer Learning for NLP/`
 - `AI Code-Reviewer/`
 - `Self-healing-engine/`
+- `agentic-finops-sre/`
 
 ## Gute Regel
 
