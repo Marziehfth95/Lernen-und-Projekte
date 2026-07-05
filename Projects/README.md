@@ -19,6 +19,7 @@ Dieser Bereich soll zeigen:
 - `AI Code-Reviewer/`
 - `Self-healing-engine/`
 - `agentic-finops-sre/`
+- `ai vulnerability analyzer/`
 
 ## Gute Regel
 
