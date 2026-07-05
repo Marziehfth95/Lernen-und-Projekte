@@ -22,6 +22,7 @@ Lernen-und-Projekte/
     |-- Transfer Learning for NLP/
     |-- AI Code-reviewer/
     |-- agentic-finops/
+    |-- ai vulnerability analyzer
     `-- Self-Healing Engine/
 ```
 
