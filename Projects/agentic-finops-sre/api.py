@@ -7,6 +7,9 @@ import sys
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from agents.finops_agent import finops_ai_app
 
+# 🌟 NEU: Importiere deinen Live-Data-Fetcher
+from live_data_fetcher import fetch_live_kubecost
+
 app = FastAPI(title="Agentic FinOps API", version="1.0")
 
 class QueryRequest(BaseModel):
@@ -21,6 +24,10 @@ def health_check():
 def analyze_data(request: QueryRequest):
     """Triggert den LangGraph Agenten-Loop."""
     try:
+        # 🌟 NEU: Bevor die KI startet, ziehen wir die absolut neuesten Daten!
+        print("🔄 Lade neueste Infrastruktur-Kosten von Kubecost...")
+        fetch_live_kubecost()
+        
         print(f"🚀 Starte Analyse für: {request.query}")
         final_state = finops_ai_app.invoke({"query": request.query, "iterations": 0})
         
@@ -33,6 +40,6 @@ def analyze_data(request: QueryRequest):
 
 @app.post("/crash")
 def simulate_crash():
-    """Chaos-Engineering: Simuliert einen fatalen Absturz für die Self-Healing Engine."""
+    """Chaos-Engineering: Simuliert einen fatalen Absturz."""
     print("💥 CRASH INITIATED: Simuliere fatalen App-Absturz (Out of Memory / Kernel Panic)!")
-    os._exit(1) # Zwingt den Python-Prozess zur sofortigen Beendigung
+    os._exit(1)

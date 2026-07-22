@@ -5,4 +5,6 @@ langchain-groq
 fastapi
 uvicorn
 python-dotenv
+langchain-openai
 pydantic
+requests

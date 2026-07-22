@@ -4,7 +4,7 @@ import contextlib
 import traceback
 from typing import TypedDict
 from dotenv import load_dotenv
-from langchain_groq import ChatGroq
+from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from langgraph.graph import StateGraph, END
 
@@ -14,21 +14,24 @@ load_dotenv()
 # 1. DAS GEDÄCHTNIS (State)
 # Hier definieren wir, was sich unsere Agenten über den Workflow hinweg merken müssen.
 class AgentState(TypedDict):
-    query: str          # Die Aufgabe des Nutzers
-    code: str           # Der generierte Python-Code
+    query: str          
+    code: str           
     error: str          # Fehlermeldungen (falls der Code abstürzt)
-    result: str         # Erfolgreiche Text-Ausgabe des Codes
-    insights: str       # Die finale Business-Zusammenfassung
+    result: str         # Erfolgreiche Text Ausgabe des Codes
+    insights: str       # Die finale Business Zusammenfassung
     iterations: int     # Zähler, um Endlosschleifen zu verhindern
 
-llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0)
-# ---------------------------------------------------------
+llm = ChatOpenAI(
+    model="meta-llama/Meta-Llama-3-8B-Instruct",
+    api_key="EMPTY",
+    base_url="http://host.docker.internal:8000/v1", # WICHTIG: host.docker.internal
+    temperature=0
+)
 # 2. DIE AGENTEN (Nodes)
-# ---------------------------------------------------------
 
 def data_analyst_agent(state: AgentState):
-    """Schreibt oder korrigiert den Python-Code."""
-    print(f"\n🧠 [Data Analyst] Überlege... (Iteration {state.get('iterations', 0) + 1})")
+    """Schreibt oder korrigiert den Python Code."""
+    print(f"\n [Data Analyst] Überlege... (Iteration {state.get('iterations', 0) + 1})")
     
     query = state["query"]
     error = state.get("error", "")
@@ -40,7 +43,7 @@ def data_analyst_agent(state: AgentState):
         {error}
         
         Bitte schreibe den Code neu und korrigiere den Fehler. 
-        Gib NUR validen Python-Code zurück, keine Markdown-Blöcke (kein ```python), keinen Erklärtext.
+        Gib NUR validen Python-Code zurück, keine Markdown Blöcke (kein ```python), keinen Erklärtext.
         """
     else:
         prompt_text = f"""Du bist ein Senior FinOps Data Engineer.
@@ -62,7 +65,7 @@ def data_analyst_agent(state: AgentState):
     
     # LLM aufrufen
     response = llm.invoke(prompt_text)
-    code = response.content.strip()
+    code =response.content.strip()
     
     # Manchmal gibt das LLM trotzdem Markdown zurück, wir bereinigen das sicherheitshalber
     if code.startswith("```python"):
@@ -73,10 +76,10 @@ def data_analyst_agent(state: AgentState):
 
 def executor_agent(state: AgentState):
     """Führt den Code aus und fängt Fehler ab (Self-Healing-Trigger)."""
-    print("⚙️ [Executor] Führe Code aus...")
+    print(" [Executor] Führe Code aus...")
     code = state["code"]
     
-    # Wir leiten die print()-Ausgaben des Codes in eine Variable um
+    # Wir leiten die print() Ausgaben des Codes in eine Variable um
     output_buffer = io.StringIO()
     
     try:
