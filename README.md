@@ -23,6 +23,7 @@ Lernen-und-Projekte/
     |-- AI Code-reviewer/
     |-- agentic-finops/
     |-- ai vulnerability analyzer
+    |-- azure-enterprise-rag
     `-- Self-Healing Engine/
 ```
 
