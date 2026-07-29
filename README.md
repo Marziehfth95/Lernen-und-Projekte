@@ -8,8 +8,8 @@ logisch und ohne Chaos einsortiert werden koennen.
 
 Dieses Repository hat zwei Hauptbereiche:
 
-- `Lernen/` fuer Tutorials, Kurse und begleitendes Training
-- `Projects/` fuer komplette eigene Projekte mit echtem Showcase Charakter
+- `Lernen/` für Tutorials, Kurse und begleitendes Training
+- `Projects/` für komplette eigene Projekte mit echtem Showcase Charakter
 
 ```text
 Lernen-und-Projekte/
