@@ -20,6 +20,7 @@ Dieser Bereich soll zeigen:
 - `Self-healing-engine/`
 - `agentic-finops-sre/`
 - `ai vulnerability analyzer/`
+- `azure-enterprise-rag`
 
 ## Gute Regel
 
