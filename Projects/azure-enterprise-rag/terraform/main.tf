@@ -43,14 +43,14 @@ resource "azurerm_postgresql_flexible_server" "postgres" {
   sku_name               = "B_Standard_B1ms"
 }
 
-# 3.1 Pgvector-Erweiterung in Azure freischalten
+# 3.1 Pgvector Erweiterung in Azure freischalten
 resource "azurerm_postgresql_flexible_server_configuration" "pgvector_extension" {
   name      = "azure.extensions"
   server_id = azurerm_postgresql_flexible_server.postgres.id
   value     = "vector"
 }
 
-# 3.2 Firewall-Regel (Zugriff für Azure-Dienste erlauben)
+# 3.2 Firewall Regel (Zugriff für Azure-Dienste erlauben)
 resource "azurerm_postgresql_flexible_server_firewall_rule" "allow_azure_services" {
   name             = "AllowAzureServices"
   server_id        = azurerm_postgresql_flexible_server.postgres.id
