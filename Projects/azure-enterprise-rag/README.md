@@ -154,7 +154,7 @@ SSL-Verschlüsselung: Die PostgreSQL-Datenbank erzwingt sslmode='require'.
 
 Entwickelt als Teil eines professionellen Cloud- & AI-Engineering Portfolios.
 
-## 🗺 Future Enhancements (Roadmap)
+## Future Enhancements (Roadmap)
 
 Dieses Projekt dient als voll funktionsfähiges MVP. Um die Architektur für hochskalierende Produktionsumgebungen zu erweitern, sind folgende Ausbaustufen geplant:
 
