@@ -1,17 +1,13 @@
 # Python
-__pycache__/
 .venv/
+__pycache__/
 *.pyc
+
+# Environment Variables (SEHR WICHTIG!)
 .env
 
-# Terraform (WICHTIG: Enthält sensible Azure Keys!)
+# Terraform (SEHR WICHTIG!)
 .terraform/
 *.tfstate
 *.tfstate.backup
 .terraform.lock.hcl
-
-# Vektor Datenbank
-chroma_data/
-
-# Mac OS
-.DS_Store

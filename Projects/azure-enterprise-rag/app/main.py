@@ -1,15 +1,16 @@
 import os
 import io
-import chromadb
+import psycopg2
+from pgvector.psycopg2 import register_vector
 import PyPDF2
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from pydantic import BaseModel
 from openai import AzureOpenAI
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-app = FastAPI(title="Azure RAG API mit ChromaDB")
+app = FastAPI(title="Enterprise RAG API mit PostgreSQL pgvector")
 
-# Open AI Setup
+# --- OPENAI SETUP ---
 API_KEY = os.getenv("OPENAI_API_KEY")
 ENDPOINT = os.getenv("OPENAI_ENDPOINT")
 
@@ -17,22 +18,54 @@ if API_KEY and ENDPOINT:
     client = AzureOpenAI(
         api_key=API_KEY,
         azure_endpoint=ENDPOINT,
-        api_version="2024-02-15-preview"
+        api_version="2024-08-01-preview" 
     )
 else:
     client = None
 
-# Chroma DB set up
-# Wir speichern die Daten lokal im Container
-chroma_client = chromadb.PersistentClient(path="./chroma_data")
-collection = chroma_client.get_or_create_collection(name="rag_documents")
+# --- POSTGRESQL SETUP ---
+DB_HOST = os.getenv("DB_HOST")
+DB_USER = os.getenv("DB_USER")
+DB_PASS = os.getenv("DB_PASS")
+DB_NAME = os.getenv("DB_NAME", "postgres")
+
+def get_db_connection():
+    # SSL ist für Azure PostgreSQL zwingend erforderlich
+    conn = psycopg2.connect(
+        host=DB_HOST,
+        user=DB_USER,
+        password=DB_PASS,
+        dbname=DB_NAME,
+        port=5432,
+        sslmode='require'
+    )
+    cur = conn.cursor()
+    
+    # 1. Pgvector-Erweiterung in der DB aktivieren
+    cur.execute("CREATE EXTENSION IF NOT EXISTS vector;")
+    
+    # 2. Tabelle für Dokumente und Embeddings erstellen (1536 Dim. für text-embedding-3-small)
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS rag_documents (
+            id bigserial PRIMARY KEY,
+            filename text,
+            content text,
+            embedding vector(1536)
+        );
+    """)
+    conn.commit()
+    
+    # 3. Vector-Datentyp in psycopg2 registrieren
+    register_vector(conn)
+    cur.close()
+    return conn
 
 text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200, length_function=len)
 
 class AskRequest(BaseModel):
     question: str
 
-#Endpunkt
+# --- ENDPUNKTE ---
 
 @app.post("/upload")
 async def upload_document(file: UploadFile = File(...)):
@@ -60,17 +93,24 @@ async def upload_document(file: UploadFile = File(...)):
         response = client.embeddings.create(input=chunks, model="text-embedding-3-small")
         embeddings = [data.embedding for data in response.data]
     except Exception as e:
-         raise HTTPException(status_code=500, detail=f"Embedding-Fehler: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Embedding-Fehler: {str(e)}")
 
-    # 4. In ChromaDB speichern
-    ids = [f"{file.filename}_{i}" for i in range(len(chunks))]
-    collection.add(
-        embeddings=embeddings,
-        documents=chunks,
-        ids=ids
-    )
+    # 4. In PostgreSQL speichern
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        for chunk, emb in zip(chunks, embeddings):
+            cur.execute(
+                "INSERT INTO rag_documents (filename, content, embedding) VALUES (%s, %s, %s)",
+                (file.filename, chunk, emb)
+            )
+        conn.commit()
+        cur.close()
+        conn.close()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Datenbank-Fehler: {str(e)}")
 
-    return {"filename": file.filename, "message": f"Erfolg! {len(chunks)} Abschnitte in ChromaDB gespeichert."}
+    return {"filename": file.filename, "message": f"Erfolg! {len(chunks)} Abschnitte in PostgreSQL gespeichert."}
 
 
 @app.post("/ask")
@@ -85,24 +125,31 @@ async def ask_question(request: AskRequest):
             model="text-embedding-3-small"
         ).data[0].embedding
 
-        # 2. Suche in ChromaDB
-        results = collection.query(
-            query_embeddings=[question_embedding],
-            n_results=3
-        )
+        # 2. Ähnlichkeitssuche mit L2-Distanz-Operator (<->) in PostgreSQL
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT content FROM rag_documents 
+            ORDER BY embedding <-> %s::vector 
+            LIMIT 3
+        """, (str(question_embedding),)) 
         
-        # 3. Kontext zusammenbauen
-        documents = results["documents"][0] if results["documents"] else []
+        results = cur.fetchall()
+        cur.close()
+        conn.close()
+
+        # 3. Kontext aufbauen
+        documents = [row[0] for row in results]
         context_text = "\n\n---\n\n".join(documents) if documents else "Keine relevanten Dokumente gefunden."
 
-        # 4. KI antworten lassen
+        # 4. Antwort von GPT-3.5 generieren lassen
         system_prompt = f"""Du bist ein hilfreicher Assistent. Beantworte die Frage AUSSCHLIESSLICH basierend auf folgendem Kontext.
         KONTEXT:
         {context_text}
         """
 
         chat_response = client.chat.completions.create(
-            model="gpt-35-turbo",
+            model="gpt-5.6-luna",  
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": request.question}
@@ -111,8 +158,10 @@ async def ask_question(request: AskRequest):
         
         return {
             "answer": chat_response.choices[0].message.content,
-            "wissen_aus_chroma": context_text 
+            "wissen_aus_postgres": context_text 
         }
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        import traceback
+        traceback.print_exc() 
+        return {"WAHRER_FEHLER": str(e)}
