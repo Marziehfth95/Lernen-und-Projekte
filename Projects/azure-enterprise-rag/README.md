@@ -1,4 +1,4 @@
-# 🚀 Enterprise RAG-Service auf Azure (Terraform, pgvector & FastAPI)
+# Enterprise RAG-Service auf Azure (Terraform, pgvector & FastAPI)
 
 [![Python](https://img.shields.io/badge/Python-3.12+-blue.svg?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.109-009688.svg?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
