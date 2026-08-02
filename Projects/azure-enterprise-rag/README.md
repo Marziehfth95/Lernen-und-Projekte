@@ -1,48 +1,51 @@
-# Enterprise RAG-Service auf Azure (Terraform, pgvector & FastAPI)
+#  Enterprise RAG-Service auf Azure (Terraform, pgvector & FastAPI)
 
 [![Python](https://img.shields.io/badge/Python-3.12+-blue.svg?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.109-009688.svg?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![Streamlit](https://img.shields.io/badge/Streamlit-FF4B4B.svg?style=for-the-badge&logo=Streamlit&logoColor=white)](https://streamlit.io/)
 [![Terraform](https://img.shields.io/badge/Terraform-IaC-623CE4.svg?style=for-the-badge&logo=terraform&logoColor=white)](https://www.terraform.io/)
 [![Azure](https://img.shields.io/badge/Azure-Cloud-0089D6.svg?style=for-the-badge&logo=microsoftazure&logoColor=white)](https://azure.microsoft.com/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-pgvector-336791.svg?style=for-the-badge&logo=postgresql&logoColor=white)](https://github.com/pgvector/pgvector)
 [![CI/CD](https://img.shields.io/badge/GitHub_Actions-Automated-2088FF.svg?style=for-the-badge&logo=githubactions&logoColor=white)](https://github.com/features/actions)
 
-Ein vollautomatisierter, cloud-nativer **Retrieval-Augmented Generation (RAG)** Service. Dieses Projekt demonstriert den Aufbau eines produktionsreifen KI-Backends, das Unternehmensdaten (PDFs/TXTs) sicher speichert, durchsuchbar macht und mit modernsten Azure OpenAI Modellen (`gpt-5.6-luna`) intelligente Antworten generiert. 
+Ein vollautomatisierter, cloud-nativer **Retrieval-Augmented Generation (RAG)** Service mit einem interaktiven **Web-Frontend**. Dieses Projekt demonstriert den Aufbau eines produktionsreifen KI-Systems, das Unternehmensdaten (PDFs/TXTs) sicher speichert, durchsuchbar macht und mit modernsten Azure OpenAI Modellen (`gpt-5.6-luna`) intelligente Antworten in einer ChatGPT-ähnlichen Oberfläche generiert. 
 
-Die gesamte Infrastruktur ist als **Infrastructure as Code (IaC)** über Terraform deklariert und wird per **CI/CD-Pipeline** in Azure Container Apps bereitgestellt.
+Die gesamte Infrastruktur ist als **Infrastructure as Code (IaC)** über Terraform deklariert und wird per **CI/CD-Pipeline** bereitgestellt.
 
 ---
 
-##  Kern-Features
+## Kern-Features
 
+- **Interaktives Chat-Frontend:** Intuitive Streamlit-UI für Datei-Uploads und Echtzeit-Dialoge mit den eigenen Daten (ohne API-Kenntnisse nutzbar).
 - **End-to-End Infrastructure as Code:** Vollständige Provisionierung der Azure-Ressourcen (Ressourcengruppe, Container Registry, Container Apps, PostgreSQL Flexible Server) via Terraform.
 - **Enterprise Vector Search:** Nutzung von `pgvector` als Vektordatenbank direkt in PostgreSQL für nahtlose L2-Distanz-Suche (`<->`) ohne zusätzliche proprietäre Vektor-DBs. Dies entkoppelt den Speicher vom Compute-Node und garantiert Persistenz.
 - **State-of-the-Art KI-Modelle:** Integration der neuesten Azure OpenAI Modelle (`text-embedding-3-small` für Embeddings, `gpt-5.6-luna` für Chat-Completions).
-- **Serverless & Skalierbar:** Deployment auf Azure Container Apps (Skalierung bis auf Null) für maximale Kosteneffizienz.
-- **Vollautomatisches CI/CD:** GitHub Actions Pipeline für Build, Push (ACR) und Deploy.
+- **Serverless & Skalierbar:** Geplantes Deployment auf Azure Container Apps (Skalierung bis auf Null) für maximale Kosteneffizienz.
 
 ---
 
-## Architektur
+##  Architektur
 
 ```mermaid
 graph TD
-    A[Client / Swagger UI] -->|REST API| B(FastAPI Backend Container)
+    A[Endnutzer] -->|Browser| F[Streamlit Web-UI]
+    F -->|REST API Calls| B(FastAPI Backend)
     
-    subgraph Azure Cloud
+    subgraph Azure Cloud Environment
         B -->|1. Zerstückeln & Vektorisieren| C[Azure OpenAI: text-embedding-3-small]
         B -->|2. Speichern / L2-Suche| D[(PostgreSQL Flexible Server + pgvector)]
         B -->|3. Kontext + Frage| E[Azure OpenAI: gpt-5.6-luna]
     end
     
     E -->|Generierte Antwort| B
-    B -->|JSON Response| A
+    B -->|JSON Response| F
 
 ```
 ##  Tech-Stack
 
 | Komponente | Technologie | Beschreibung |
 | :--- | :--- | :--- |
+| **Frontend UI** | Streamlit, Python | Interaktives Web-Interface für Endnutzer (Chat & Upload). |
 | **Backend API** | FastAPI, Python, Uvicorn | Asynchrones Framework für extrem schnelle API-Antworten. |
 | **Infrastruktur** | Terraform, Azure CLI | Deklaratives IaC für reproduzierbare Azure-Umgebungen. |
 | **Datenbank** | PostgreSQL Flexible Server | Relationale DB erweitert um `pgvector` (1536 Dimensionen). |
@@ -51,22 +54,20 @@ graph TD
 | **CI/CD** | GitHub Actions | Automatisierte Build- & Deployment-Workflows. |
 
 ## Projektstruktur
-```bash
+``` bash
+.
+├── frontend/
+│   └── app.py               # Streamlit Chat Interface & UI
 ├── app/
 │   ├── main.py              # FastAPI Anwendung (Upload & Ask Endpunkte)
 │   ├── requirements.txt     # Python Abhängigkeiten
-│   ├── Dockerfile           # Multi-Stage Docker Build
 │   └── .env.example         # Template für Umgebungsvariablen
 ├── terraform/
 │   ├── main.tf              # Haupt-Infrastruktur-Definitionen
 │   ├── variables.tf         # Terraform Variablen (z.B. Passwörter)
 │   └── outputs.tf           # Endpoints und DB-Hostnamen
-├── .github/
-│   └── workflows/
-│       └── deploy.yml       # GitHub Actions CI/CD Pipeline
 └── README.md
 ```
-
 ## Lokales Setup (Development)
 1. Voraussetzungen
 Python 3.12+ installiert
@@ -85,9 +86,10 @@ python -m venv .venv
 # Mac/Linux
 source .venv/bin/activate  
 # Windows
-# .venv\\Scripts\\activate  
+# .venv\Scripts\activate  
 
 pip install -r app/requirements.txt
+pip install streamlit requests
 ```
 
 3. Umgebungsvariablen konfigurieren
@@ -100,16 +102,26 @@ DB_USER="psqladmin"
 DB_PASS="SicheresPasswort123!"
 DB_NAME="postgres"
 ```
-4. Server starten
-```bash
+4. Applikation starten (Frontend & Backend)
+Für den lokalen Betrieb werden zwei Terminal-Fenster benötigt:
+
+Terminal 1: FastAPI Backend starten
+``` bash
 cd app
 uvicorn main:app --reload --env-file .env
 ```
+(Die API läuft nun auf http://127.0.0.1:8000)
 
-Die interaktive API-Dokumentation (Swagger UI) ist unter http://127.0.0.1:8000/docs erreichbar.
+Terminal 2: Streamlit Frontend starten
+```bash
+source .venv/bin/activate  # Virtuelle Umgebung erneut aktivieren
+cd frontend
+streamlit run app.py
+```
+(Das User-Interface öffnet sich automatisch im Browser unter http://localhost:8501)
 
 ## Infrastruktur Deployment (Terraform)
-Die gesamte Umgebung kann in wenigen Minuten provisioniert werden:
+Die Kern-Infrastruktur kann in wenigen Minuten provisioniert werden:
 ```bash
 cd terraform
 terraform init
@@ -154,15 +166,15 @@ SSL-Verschlüsselung: Die PostgreSQL-Datenbank erzwingt sslmode='require'.
 
 Entwickelt als Teil eines professionellen Cloud- & AI-Engineering Portfolios.
 
-## Future Enhancements (Roadmap)
+## 🗺 Future Enhancements (Roadmap)
 
 Dieses Projekt dient als voll funktionsfähiges MVP. Um die Architektur für hochskalierende Produktionsumgebungen zu erweitern, sind folgende Ausbaustufen geplant:
 
-- **Hybrid Search & Re-Ranking:** Kombination aus Keyword Suche (BM25) und semantischer Vektorsuche sowie Integration eines Cross-Encoders (z.B. Cohere) für präzisere Suchergebnisse.
-- **Enterprise Security (RBAC):** Absicherung der FastAPI Endpunkte durch **Azure Entra ID (Active Directory)** mit OAuth2 für rollenbasierte Zugriffskontrolle.
-- **Observability & LLM-Tracing:** Integration von **Azure Application Insights** oder LangSmith, um Token-Verbrauch, Latenzen und LLM-Halluzinationen in Echtzeit zu überwachen.
-- **Interaktives Frontend:** Entwicklung eines Chat-Interfaces mit **Streamlit** oder React/Next.js, um Fachanwendern eine intuitive Bedienung ohne API-Kenntnisse zu ermöglichen.
-- **Multi-Modal RAG:** Erweiterung der Datenextraktion auf Bilder und Tabellen innerhalb von PDFs mithilfe von Vision-Modellen.
+*  Multi Container Deployment: Erstellung von Dockerfiles für Frontend und Backend und Orchestrierung via Docker Compose / Azure Container Apps.
 
+*  Hybrid Search & Re-Ranking: Kombination aus Keyword-Suche (BM25) und semantischer Vektorsuche sowie Integration eines Cross-Encoders für präzisere Suchergebnisse.
 
+*  Enterprise Security (RBAC): Absicherung der Endpunkte durch Azure Entra ID (Active Directory) mit OAuth2 für rollenbasierte Zugriffskontrolle.
+
+*  Observability & LLM-Tracing: Integration von Azure Application Insights, um Token-Verbrauch, Latenzen und LLM-Halluzinationen in Echtzeit zu überwachen.
 
