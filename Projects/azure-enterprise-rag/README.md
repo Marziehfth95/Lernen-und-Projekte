@@ -17,14 +17,14 @@ Die gesamte Infrastruktur ist als **Infrastructure as Code (IaC)** über Terrafo
 ## Kern-Features
 
 - **Interaktives Chat-Frontend:** Intuitive Streamlit-UI für Datei-Uploads und Echtzeit-Dialoge mit den eigenen Daten (ohne API-Kenntnisse nutzbar).
-- **End-to-End Infrastructure as Code:** Vollständige Provisionierung der Azure-Ressourcen (Ressourcengruppe, Container Registry, Container Apps, PostgreSQL Flexible Server) via Terraform.
+- **End to End Infrastructure as Code:** Vollständige Provisionierung der Azure-Ressourcen (Ressourcengruppe, Container Registry, Container Apps, PostgreSQL Flexible Server) via Terraform.
 - **Enterprise Vector Search:** Nutzung von `pgvector` als Vektordatenbank direkt in PostgreSQL für nahtlose L2-Distanz-Suche (`<->`) ohne zusätzliche proprietäre Vektor-DBs. Dies entkoppelt den Speicher vom Compute-Node und garantiert Persistenz.
 - **State-of-the-Art KI-Modelle:** Integration der neuesten Azure OpenAI Modelle (`text-embedding-3-small` für Embeddings, `gpt-5.6-luna` für Chat-Completions).
 - **Serverless & Skalierbar:** Geplantes Deployment auf Azure Container Apps (Skalierung bis auf Null) für maximale Kosteneffizienz.
 
 ---
 
-##  Architektur
+##  Architektur des Projekts
 
 ```mermaid
 graph TD
