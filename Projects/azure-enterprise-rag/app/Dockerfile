@@ -20,11 +20,12 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Den eigentlichen Code kopieren
 COPY . .
 
-# Ordner für ChromaDB vorbereiten
-RUN mkdir -p /data/chromadb
+# Container nicht als root ausführen
+RUN useradd --create-home --uid 10001 appuser && chown -R appuser:appuser /app
+USER appuser
 
 # Den Port freigeben
 EXPOSE 8000
 
-# Den Server starten (läuft jetzt standardmäßig als root)
+# Den Server starten
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

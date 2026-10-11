@@ -30,17 +30,73 @@ resource "azurerm_cognitive_account" "openai" {
   sku_name            = "S0"
 }
 
+# Private network shared by Container Apps and PostgreSQL. The two services
+# require separate delegated subnets.
+resource "azurerm_virtual_network" "rag" {
+  name                = "vnet-rag-app"
+  address_space       = ["10.40.0.0/16"]
+  location            = azurerm_resource_group.rg.location
+  resource_group_name = azurerm_resource_group.rg.name
+}
+
+resource "azurerm_subnet" "container_apps" {
+  name                 = "snet-container-apps"
+  resource_group_name  = azurerm_resource_group.rg.name
+  virtual_network_name = azurerm_virtual_network.rag.name
+  address_prefixes     = ["10.40.0.0/23"]
+
+  delegation {
+    name = "container-apps-delegation"
+    service_delegation {
+      name    = "Microsoft.App/environments"
+      actions = ["Microsoft.Network/virtualNetworks/subnets/join/action"]
+    }
+  }
+}
+
+resource "azurerm_subnet" "postgres" {
+  name                 = "snet-postgres"
+  resource_group_name  = azurerm_resource_group.rg.name
+  virtual_network_name = azurerm_virtual_network.rag.name
+  address_prefixes     = ["10.40.2.0/24"]
+
+  delegation {
+    name = "postgres-delegation"
+    service_delegation {
+      name    = "Microsoft.DBforPostgreSQL/flexibleServers"
+      actions = ["Microsoft.Network/virtualNetworks/subnets/join/action"]
+    }
+  }
+}
+
+resource "azurerm_private_dns_zone" "postgres" {
+  name                = "private.postgres.database.azure.com"
+  resource_group_name = azurerm_resource_group.rg.name
+}
+
+resource "azurerm_private_dns_zone_virtual_network_link" "postgres" {
+  name                  = "postgres-vnet-link"
+  private_dns_zone_name = azurerm_private_dns_zone.postgres.name
+  virtual_network_id    = azurerm_virtual_network.rag.id
+  resource_group_name   = azurerm_resource_group.rg.name
+}
+
 # 3. PostgreSQL Flexible Server
 resource "azurerm_postgresql_flexible_server" "postgres" {
-  name                   = "postgres-rag-fattahi995"
-  resource_group_name    = azurerm_resource_group.rg.name
-  location               = azurerm_resource_group.rg.location
-  version                = "14"
-  administrator_login    = "psqladmin"
-  administrator_password = var.db_password
-  zone                   = "1"
-  storage_mb             = 32768
-  sku_name               = "B_Standard_B1ms"
+  name                          = "postgres-rag-fattahi995"
+  resource_group_name           = azurerm_resource_group.rg.name
+  location                      = azurerm_resource_group.rg.location
+  version                       = "14"
+  administrator_login           = "psqladmin"
+  administrator_password        = var.db_password
+  zone                          = "1"
+  storage_mb                    = 32768
+  sku_name                      = "B_Standard_B1ms"
+  delegated_subnet_id           = azurerm_subnet.postgres.id
+  private_dns_zone_id           = azurerm_private_dns_zone.postgres.id
+  public_network_access_enabled = false
+
+  depends_on = [azurerm_private_dns_zone_virtual_network_link.postgres]
 }
 
 # 3.1 Pgvector Erweiterung in Azure freischalten
@@ -50,28 +106,39 @@ resource "azurerm_postgresql_flexible_server_configuration" "pgvector_extension"
   value     = "vector"
 }
 
-# 3.2 Firewall Regel (Zugriff für Azure-Dienste erlauben)
-resource "azurerm_postgresql_flexible_server_firewall_rule" "allow_azure_services" {
-  name             = "AllowAzureServices"
-  server_id        = azurerm_postgresql_flexible_server.postgres.id
-  start_ip_address = "0.0.0.0"
-  end_ip_address   = "0.0.0.0"
-}
-
 # 4. Azure Container Registry (ACR)
 resource "azurerm_container_registry" "acr" {
   name                = "acrragfattahi996"
   resource_group_name = azurerm_resource_group.rg.name
   location            = azurerm_resource_group.rg.location
   sku                 = "Basic"
-  admin_enabled       = true
+  admin_enabled       = false
+}
+
+resource "azurerm_user_assigned_identity" "rag_app" {
+  name                = "id-rag-app"
+  location            = azurerm_resource_group.rg.location
+  resource_group_name = azurerm_resource_group.rg.name
+}
+
+resource "azurerm_role_assignment" "acr_pull" {
+  scope                = azurerm_container_registry.acr.id
+  role_definition_name = "AcrPull"
+  principal_id         = azurerm_user_assigned_identity.rag_app.principal_id
+}
+
+resource "azurerm_role_assignment" "openai_user" {
+  scope                = azurerm_cognitive_account.openai.id
+  role_definition_name = "Cognitive Services OpenAI User"
+  principal_id         = azurerm_user_assigned_identity.rag_app.principal_id
 }
 
 # 5. Container App Environment
 resource "azurerm_container_app_environment" "env" {
-  name                = "cae-rag-app"
-  location            = azurerm_resource_group.rg.location
-  resource_group_name = azurerm_resource_group.rg.name
+  name                     = "cae-rag-app"
+  location                 = azurerm_resource_group.rg.location
+  resource_group_name      = azurerm_resource_group.rg.name
+  infrastructure_subnet_id = azurerm_subnet.container_apps.id
 }
 
 # 6. Container App
@@ -81,23 +148,19 @@ resource "azurerm_container_app" "rag_app" {
   resource_group_name          = azurerm_resource_group.rg.name
   revision_mode                = "Single"
 
-  secret {
-    name  = "acr-password"
-    value = azurerm_container_registry.acr.admin_password
+  identity {
+    type         = "UserAssigned"
+    identity_ids = [azurerm_user_assigned_identity.rag_app.id]
   }
-  secret {
-    name  = "openai-key"
-    value = azurerm_cognitive_account.openai.primary_access_key
-  }
+
   secret {
     name  = "db-password"
     value = var.db_password
   }
 
   registry {
-    server               = azurerm_container_registry.acr.login_server
-    username             = azurerm_container_registry.acr.admin_username
-    password_secret_name = "acr-password"
+    server   = azurerm_container_registry.acr.login_server
+    identity = azurerm_user_assigned_identity.rag_app.id
   }
 
   template {
@@ -108,12 +171,28 @@ resource "azurerm_container_app" "rag_app" {
       memory = "1.0Gi"
 
       env {
-        name        = "OPENAI_API_KEY"
-        secret_name = "openai-key"
-      }
-      env {
         name  = "OPENAI_ENDPOINT"
         value = azurerm_cognitive_account.openai.endpoint
+      }
+      env {
+        name  = "AZURE_CLIENT_ID"
+        value = azurerm_user_assigned_identity.rag_app.client_id
+      }
+      env {
+        name  = "AUTH_TENANT_ID"
+        value = var.auth_tenant_id
+      }
+      env {
+        name  = "AUTH_CLIENT_ID"
+        value = var.auth_client_id
+      }
+      env {
+        name  = "AUTH_REQUIRED_ROLE"
+        value = var.auth_required_role
+      }
+      env {
+        name  = "AUTH_REQUIRED_SCOPE"
+        value = var.auth_required_scope
       }
       env {
         name  = "DB_HOST"
@@ -135,13 +214,19 @@ resource "azurerm_container_app" "rag_app" {
   }
 
   ingress {
-    external_enabled = true
+    external_enabled = var.external_ingress_enabled
     target_port      = 8000
     traffic_weight {
       percentage      = 100
       latest_revision = true
     }
   }
+
+
+  depends_on = [
+    azurerm_role_assignment.acr_pull,
+    azurerm_role_assignment.openai_user
+  ]
 }
 
 # 7. Azure OpenAI Deployment: Embedding Modell
@@ -169,7 +254,7 @@ resource "azurerm_cognitive_deployment" "chat_model" {
   model {
     format  = "OpenAI"
     name    = "gpt-5.6-luna"
-    version = "2026-07-09" 
+    version = "2026-07-09"
   }
 
   sku {

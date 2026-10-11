@@ -2,6 +2,8 @@ fastapi
 uvicorn
 openai
 pydantic
+PyJWT[crypto]
+azure-identity
 python-multipart
 PyPDF2
 langchain-text-splitters

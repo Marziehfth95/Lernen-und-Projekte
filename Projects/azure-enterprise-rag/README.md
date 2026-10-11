@@ -1,180 +1,294 @@
-#  Enterprise RAG-Service auf Azure (Terraform, pgvector & FastAPI)
+# Azure Enterprise RAG
 
-[![Python](https://img.shields.io/badge/Python-3.12+-blue.svg?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.109-009688.svg?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
-[![Streamlit](https://img.shields.io/badge/Streamlit-FF4B4B.svg?style=for-the-badge&logo=Streamlit&logoColor=white)](https://streamlit.io/)
-[![Terraform](https://img.shields.io/badge/Terraform-IaC-623CE4.svg?style=for-the-badge&logo=terraform&logoColor=white)](https://www.terraform.io/)
-[![Azure](https://img.shields.io/badge/Azure-Cloud-0089D6.svg?style=for-the-badge&logo=microsoftazure&logoColor=white)](https://azure.microsoft.com/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-pgvector-336791.svg?style=for-the-badge&logo=postgresql&logoColor=white)](https://github.com/pgvector/pgvector)
-[![CI/CD](https://img.shields.io/badge/GitHub_Actions-Automated-2088FF.svg?style=for-the-badge&logo=githubactions&logoColor=white)](https://github.com/features/actions)
+> Ein sicherheitsorientierter Retrieval-Augmented-Generation-Service, der Unternehmensdokumente nicht nur semantisch durchsucht, sondern Identität, Mandant, Dokumentberechtigung und Quellenbezug über die gesamte Anfrage hinweg durchsetzt.
 
-Ein vollautomatisierter, cloud-nativer **Retrieval-Augmented Generation (RAG)** Service mit einem interaktiven **Web-Frontend**. Dieses Projekt demonstriert den Aufbau eines produktionsreifen KI-Systems, das Unternehmensdaten (PDFs/TXTs) sicher speichert, durchsuchbar macht und mit modernsten Azure OpenAI Modellen (`gpt-5.6-luna`) intelligente Antworten in einer ChatGPT-ähnlichen Oberfläche generiert. 
+[![Python](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-API-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![Azure](https://img.shields.io/badge/Microsoft_Azure-Cloud-0078D4?logo=microsoftazure&logoColor=white)](https://azure.microsoft.com/)
+[![Terraform](https://img.shields.io/badge/Terraform-IaC-844FBA?logo=terraform&logoColor=white)](https://www.terraform.io/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-pgvector-4169E1?logo=postgresql&logoColor=white)](https://github.com/pgvector/pgvector)
+[![Microsoft Entra ID](https://img.shields.io/badge/Microsoft_Entra_ID-Authentication-5E5CE6)](https://www.microsoft.com/security/business/identity-access/microsoft-entra-id)
 
-Die gesamte Infrastruktur ist als **Infrastructure as Code (IaC)** über Terraform deklariert und wird per **CI/CD-Pipeline** bereitgestellt.
+## Warum dieses Projekt?
 
----
+Ein RAG-Prototyp ist schnell gebaut: Datei hochladen, Text in Chunks zerlegen, Embeddings speichern und die ähnlichsten Treffer an ein Sprachmodell senden.
 
-## Kern-Features
+Für echte Unternehmensdaten reicht das nicht. Die entscheidende Frage lautet nicht nur **„Welcher Chunk passt zur Frage?“**, sondern zuerst:
 
-- **Interaktives Chat-Frontend:** Intuitive Streamlit-UI für Datei-Uploads und Echtzeit-Dialoge mit den eigenen Daten (ohne API-Kenntnisse nutzbar).
-- **End to End Infrastructure as Code:** Vollständige Provisionierung der Azure-Ressourcen (Ressourcengruppe, Container Registry, Container Apps, PostgreSQL Flexible Server) via Terraform.
-- **Enterprise Vector Search:** Nutzung von `pgvector` als Vektordatenbank direkt in PostgreSQL für nahtlose L2-Distanz-Suche (`<->`) ohne zusätzliche proprietäre Vektor-DBs. Dies entkoppelt den Speicher vom Compute-Node und garantiert Persistenz.
-- **State-of-the-Art KI-Modelle:** Integration der neuesten Azure OpenAI Modelle (`text-embedding-3-small` für Embeddings, `gpt-5.6-luna` für Chat-Completions).
-- **Serverless & Skalierbar:** Geplantes Deployment auf Azure Container Apps (Skalierung bis auf Null) für maximale Kosteneffizienz.
+> **„Welche Chunks darf genau dieser Benutzer in genau diesem Mandanten überhaupt sehen?“**
 
----
+Dieses Projekt beantwortet beide Fragen in einer zusammenhängenden Architektur. Die Autorisierung wird nicht nachträglich auf bereits geladene Suchtreffer angewendet, sondern direkt in der PostgreSQL-Abfrage. Nur erlaubte Chunks können den Prompt erreichen. Antworten werden zusätzlich an überprüfbare Quellenlabels gebunden.
 
-##  Architektur des Projekts
+## Was das System demonstriert
+
+- **Entra-ID-Authentifizierung:** Validierung von Signatur, Issuer, Audience, Tenant, Ablaufzeit und optionalem OAuth-Scope beziehungsweise App-Role.
+- **Dokumentbezogene Zugriffskontrolle:** Eigentümer sowie explizite Benutzer- und Gruppenfreigaben pro Dokument.
+- **Tenant-isoliertes Retrieval:** pgvector-Suche mit verpflichtendem Tenant- und ACL-Filter direkt in SQL.
+- **Quellengebundene Antworten:** Das Modell darf nur aus autorisierten Chunks antworten und muss Aussagen mit `[S1]`, `[S2]` usw. belegen.
+- **Sichere Fehlersemantik:** Aussagekräftige HTTP-Statuscodes statt erfolgreicher `200`-Antworten mit versteckten Fehlermeldungen.
+- **Private Azure-Datenebene:** PostgreSQL ohne öffentlichen Netzwerkzugang, erreichbar über ein delegiertes Subnetz und Private DNS.
+- **Passwordless Azure-Zugriffe:** Managed Identity für Azure OpenAI und ACR Image Pull.
+- **Reproduzierbare Infrastruktur:** Netzwerk, PostgreSQL, Container Apps, ACR, Identität, RBAC und Model Deployments als Terraform-Code.
+- **Interaktive Demo:** Streamlit-Oberfläche für authentifizierte Uploads, Fragen und nachvollziehbare Quellen.
+
+## Architektur
 
 ```mermaid
-graph TD
-    A[Endnutzer] -->|Browser| F[Streamlit Web-UI]
-    F -->|REST API Calls| B(FastAPI Backend)
-    
-    subgraph Azure Cloud Environment
-        B -->|1. Zerstückeln & Vektorisieren| C[Azure OpenAI: text-embedding-3-small]
-        B -->|2. Speichern / L2-Suche| D[(PostgreSQL Flexible Server + pgvector)]
-        B -->|3. Kontext + Frage| E[Azure OpenAI: gpt-5.6-luna]
+flowchart LR
+    U[Benutzer] -->|Entra Access Token| UI[Streamlit UI]
+    UI -->|Bearer Token + Request| API[FastAPI]
+
+    API --> AUTH[JWT-Prüfung<br/>Tenant · Audience · Scope/Role]
+    AUTH --> PRINCIPAL[Principal<br/>User · Tenant · Groups]
+
+    subgraph Azure Virtual Network
+        API -->|Managed Identity| AOAI[Azure OpenAI]
+        API -->|TLS · Private DNS| PG[(PostgreSQL + pgvector)]
+        PG --> ACL[Dokumente · ACLs · Chunks]
     end
-    
-    E -->|Generierte Antwort| B
-    B -->|JSON Response| F
 
+    PRINCIPAL --> FILTER[ACL-gefiltertes Retrieval]
+    ACL --> FILTER
+    FILTER -->|nur autorisierte Chunks| PROMPT[Quellengebundener Prompt]
+    PROMPT --> AOAI
+    AOAI --> VERIFY[Zitationsprüfung]
+    VERIFY -->|Antwort + erlaubte Quellen| UI
 ```
-##  Tech-Stack
 
-| Komponente | Technologie | Beschreibung |
-| :--- | :--- | :--- |
-| **Frontend UI** | Streamlit, Python | Interaktives Web-Interface für Endnutzer (Chat & Upload). |
-| **Backend API** | FastAPI, Python, Uvicorn | Asynchrones Framework für extrem schnelle API-Antworten. |
-| **Infrastruktur** | Terraform, Azure CLI | Deklaratives IaC für reproduzierbare Azure-Umgebungen. |
-| **Datenbank** | PostgreSQL Flexible Server | Relationale DB erweitert um `pgvector` (1536 Dimensionen). |
-| **KI & LLM** | Azure OpenAI, LangChain | Enterprise-Grade KI (Datenschutzkonform). |
-| **Deployment** | Azure Container Apps, ACR | Serverless Container Hosting. |
-| **CI/CD** | GitHub Actions | Automatisierte Build- & Deployment-Workflows. |
+### Vertrauensgrenzen
+
+1. Das Zugriffstoken wird serverseitig über die Entra-JWKS validiert.
+2. `tenant_id`, `user_id` und Gruppen stammen ausschließlich aus validierten Token-Claims.
+3. Die Retrieval-Abfrage akzeptiert einen Chunk nur, wenn der Benutzer Eigentümer ist oder eine passende Benutzer-/Gruppenfreigabe besitzt.
+4. Optionale Filter wie `filename` oder `document_id` schränken das Ergebnis weiter ein, ersetzen aber niemals die ACL-Prüfung.
+5. Das Frontend erhält keine vollständigen Roh-Chunks, sondern ausschließlich validierte Quellenmetadaten.
+
+## Datenmodell
+
+| Tabelle | Zweck |
+|---|---|
+| `rag_document_metadata` | Dokument-ID, Tenant, Eigentümer, Dateiname und Erstellungszeit |
+| `rag_document_permissions` | Explizite `reader`/`editor`-Freigaben für Benutzer oder Gruppen |
+| `rag_chunks` | Dokumentreferenz, Tenant, Chunk-Index, Text und 1536-dimensionales Embedding |
+
+Bereits vorhandene Datensätze aus der alten Tabelle `rag_documents` werden absichtlich nicht automatisch übernommen: Ohne verlässliche Eigentümer- und Tenant-Zuordnung wäre eine Migration sicherheitstechnisch nicht vertretbar.
+
+## Tech Stack
+
+| Bereich | Technologie | Aufgabe |
+|---|---|---|
+| Web UI | Streamlit | Upload, Chat und Quellenanzeige |
+| API | FastAPI, Pydantic, Uvicorn | Authentifizierte REST-Endpunkte und Validierung |
+| Identity | Microsoft Entra ID, PyJWT | JWT-, Tenant-, Scope- und Rollenprüfung |
+| Retrieval | PostgreSQL Flexible Server, pgvector | Persistenz und L2-Vektorsuche mit ACL-Prädikaten |
+| AI | Azure OpenAI | Embeddings und quellengestützte Antwortgenerierung |
+| Cloud Runtime | Azure Container Apps, ACR | Container-Ausführung und Image Registry |
+| Security | Managed Identity, Azure RBAC, Private DNS | Passwordless Service-Zugriffe und private Datenbankanbindung |
+| Infrastructure | Terraform | Reproduzierbare Azure-Ressourcen |
 
 ## Projektstruktur
-``` bash
-.
-├── frontend/
-│   └── app.py               # Streamlit Chat Interface & UI
+
+```text
+azure-enterprise-rag/
 ├── app/
-│   ├── main.py              # FastAPI Anwendung (Upload & Ask Endpunkte)
-│   ├── requirements.txt     # Python Abhängigkeiten
-│   └── .env.example         # Template für Umgebungsvariablen
+│   ├── auth.py               # Entra-JWT-Prüfung und Principal-Modell
+│   ├── main.py               # FastAPI, Ingestion, ACL-Retrieval und Quellenbindung
+│   ├── Dockerfile            # Non-root Backend-Container
+│   ├── requirements.txt
+│   └── requirements-dev.txt
+├── frontend/
+│   └── app.py                # Streamlit-Client mit Bearer-Token-Unterstützung
 ├── terraform/
-│   ├── main.tf              # Haupt-Infrastruktur-Definitionen
-│   ├── variables.tf         # Terraform Variablen (z.B. Passwörter)
-│   └── outputs.tf           # Endpoints und DB-Hostnamen
+│   ├── backend.tf            # Remote State Backend
+│   ├── main.tf               # Azure-Ressourcen, Netzwerk, Identität und RBAC
+│   └── variables.tf
+├── tests/
+│   └── test_security.py      # Auth-, ACL- und HTTP-Fehler-Regressionstests
 └── README.md
 ```
-## Lokales Setup (Development)
-1. Voraussetzungen
-Python 3.12+ installiert
 
-Azure CLI (az login erfolgreich durchgeführt)
+## API
 
-Ein bereitgestellter Azure PostgreSQL Server & Azure OpenAI Account (via Terraform).
+### `GET /health`
 
-2. Installation
-Klonen Sie das Repository und aktivieren Sie eine virtuelle Umgebung:
+Ein minimaler Health-Endpunkt ohne interne Systemdetails.
+
+### `POST /upload`
+
+Akzeptiert authentifizierte PDF- und TXT-Uploads bis standardmäßig 10 MiB. Das Dokument gehört automatisch dem angemeldeten Benutzer. Optionale Freigaben können als kommaseparierte Entra-Objekt-IDs übergeben werden.
+
 ```bash
-git clone [https://github.com/IhrUsername/azure-enterprise-rag.git](https://github.com/IhrUsername/azure-enterprise-rag.git)
-cd azure-enterprise-rag
+curl --request POST http://127.0.0.1:8000/upload \
+  --header "Authorization: Bearer ${ACCESS_TOKEN}" \
+  --form "file=@mein-dokument.pdf" \
+  --form "shared_with_groups=<entra-group-object-id>"
+```
+
+Beispielantwort:
+
+```json
+{
+  "document_id": 42,
+  "filename": "mein-dokument.pdf",
+  "chunks": 7,
+  "message": "The document was indexed successfully."
+}
+```
+
+### `POST /ask`
+
+Die Suche kann optional auf ein Dokument oder einen Dateinamen begrenzt werden. Tenant- und ACL-Filter gelten unabhängig davon immer.
+
+```bash
+curl --request POST http://127.0.0.1:8000/ask \
+  --header "Authorization: Bearer ${ACCESS_TOKEN}" \
+  --header "Content-Type: application/json" \
+  --data '{
+    "question": "Welche Sicherheitsmaßnahmen werden beschrieben?",
+    "filename": "mein-dokument.pdf"
+  }'
+```
+
+Beispielantwort:
+
+```json
+{
+  "answer": "Die Datenbank ist ausschließlich über ein privates Netzwerk erreichbar [S1].",
+  "sources": [
+    {
+      "citation": "S1",
+      "document_id": 42,
+      "filename": "mein-dokument.pdf",
+      "chunk_index": 3
+    }
+  ],
+  "request_id": "2f04b76d-81bd-42a1-84fc-49d556721778"
+}
+```
+
+Enthält die Modellantwort keine gültigen Quellen oder erfindet sie ein unbekanntes Quellenlabel, wird die Antwort verworfen und durch eine sichere, unbelegte-Antwort-Meldung ersetzt.
+
+## Lokale Entwicklung
+
+### Voraussetzungen
+
+- Python 3.11 oder neuer
+- erreichbarer PostgreSQL-Server mit freigeschalteter `vector`-Extension
+- Azure-OpenAI-Ressource mit Embedding- und Chat-Deployment
+- Entra-App-Registrierung, die ein API-Scope oder eine App-Role bereitstellt
+
+### Installation
+
+```bash
+git clone https://github.com/Marziehfth95/Lernen-und-Projekte.git
+cd Lernen-und-Projekte/Projects/azure-enterprise-rag
 
 python -m venv .venv
-# Mac/Linux
-source .venv/bin/activate  
-# Windows
-# .venv\Scripts\activate  
-
-pip install -r app/requirements.txt
-pip install streamlit requests
+source .venv/bin/activate
+pip install -r app/requirements-dev.txt
 ```
 
-3. Umgebungsvariablen konfigurieren
-Erstellen Sie im Ordner app/ eine .env Datei:
-```Ini, TOML
-OPENAI_API_KEY="azure_openai_key"
-OPENAI_ENDPOINT="https://<ihre-ressource>[.openai.azure.com/](https://.openai.azure.com/)"
-DB_HOST="<ihr-server>.postgres.database.azure.com"
-DB_USER="psqladmin"
-DB_PASS="SicheresPasswort123!"
-DB_NAME="postgres"
-```
-4. Applikation starten (Frontend & Backend)
-Für den lokalen Betrieb werden zwei Terminal-Fenster benötigt:
+### Backend konfigurieren
 
-Terminal 1: FastAPI Backend starten
-``` bash
+Beispiel für `app/.env`:
+
+```dotenv
+OPENAI_ENDPOINT=https://<resource-name>.openai.azure.com/
+OPENAI_API_KEY=<nur-fuer-lokale-entwicklung>
+
+DB_HOST=<server>.postgres.database.azure.com
+DB_USER=<database-user>
+DB_PASS=<database-password>
+DB_NAME=postgres
+
+AUTH_TENANT_ID=<entra-tenant-id>
+AUTH_CLIENT_ID=<entra-api-client-id>
+AUTH_REQUIRED_SCOPE=access_as_user
+# AUTH_REQUIRED_ROLE=Rag.User
+```
+
+In Azure wird kein `OPENAI_API_KEY` benötigt: Dort verwendet das Backend die zugewiesene Managed Identity.
+
+### Anwendungen starten
+
+Terminal 1:
+
+```bash
 cd app
 uvicorn main:app --reload --env-file .env
 ```
-(Die API läuft nun auf http://127.0.0.1:8000)
 
-Terminal 2: Streamlit Frontend starten
+Terminal 2:
+
 ```bash
-source .venv/bin/activate  # Virtuelle Umgebung erneut aktivieren
-cd frontend
-streamlit run app.py
+source .venv/bin/activate
+API_URL=http://127.0.0.1:8000 streamlit run frontend/app.py
 ```
-(Das User-Interface öffnet sich automatisch im Browser unter http://localhost:8501)
 
-## Infrastruktur Deployment (Terraform)
-Die Kern-Infrastruktur kann in wenigen Minuten provisioniert werden:
+Das Frontend erwartet ein Entra Access Token für die konfigurierte API-Audience. Es kann im geschützten Eingabefeld eingetragen oder für lokale Tests über `API_BEARER_TOKEN` bereitgestellt werden.
+
+## Tests
+
+```bash
+pytest -q
+```
+
+Die Regressionstests prüfen unter anderem:
+
+- Requests ohne Bearer Token werden mit `401` abgewiesen.
+- Entra-Claims werden in einen vertrauenswürdigen Principal überführt.
+- Die Retrieval-SQL enthält Tenant-, Eigentümer-, Benutzer-, Gruppen- und Dateifilter.
+- Eine Suche ohne autorisierte Treffer liefert `404` statt einer irreführenden HTTP-200-Fehlerantwort.
+
+## Azure Deployment mit Terraform
+
 ```bash
 cd terraform
 terraform init
-terraform plan
+terraform fmt -check
+terraform validate
+terraform plan \
+  -var="auth_tenant_id=<tenant-id>" \
+  -var="auth_client_id=<api-client-id>" \
+  -var="db_password=<strong-password>"
 terraform apply
 ```
 
-## API Endpunkte (Nutzung)
-1. Dokument hochladen (POST /upload)
-Liest PDF- oder TXT-Dateien aus, zerteilt sie in Chunks, generiert Embeddings und speichert sie in der DB.
+`external_ingress_enabled` ist standardmäßig `false`. Ein öffentlich erreichbares Backend muss bewusst mit `-var="external_ingress_enabled=true"` aktiviert werden; die JWT-Prüfung bleibt dabei verpflichtend.
 
-cURL Beispiel:
-```bash
-curl -X 'POST' \
-  '[http://127.0.0.1:8000/upload](http://127.0.0.1:8000/upload)' \
-  -H 'accept: application/json' \
-  -H 'Content-Type: multipart/form-data' \
-  -F 'file=@mein_dokument.pdf'
-  ```
-  2. Frage stellen (POST /ask)
-    Sucht den relevantesten Kontext per Vektor-Distanz aus der Datenbank und lässt GPT eine fundierte Antwort generieren.
+> **Wichtig bei bestehenden Umgebungen:** Der Wechsel eines bereits öffentlich provisionierten PostgreSQL Flexible Servers auf ein delegiertes privates Subnetz kann einen Ressourcenaustausch auslösen. Vor dem Apply immer Backup, State und `terraform plan` prüfen.
 
-Request Body:
-```JSON
-{
-  "question": "Was sind die wichtigsten Qualifikationen im Lebenslauf?"
-}
-```
-Respons:
-```JSON
-{
-  "answer": "Basierend auf dem Kontext verfügt der Bewerber über tiefgehende Expertise in Cloud Architecture, Kubernetes, und Python-Entwicklung...",
-  "wissen_aus_postgres": "[Gefundene Text Chunks ]"
-}
-```
-## Security & Compliance
-Private Endpoints: Azure OpenAI behält keine Prompts zu Trainingszwecken (Enterprise Privacy).
+## Security by Design
 
-Secrets Management: Passwörter und API-Keys werden über Azure Key Vault / GitHub Secrets injiziert.
+| Risiko | Gegenmaßnahme |
+|---|---|
+| Anonymer API-Zugriff | Entra-JWT-Prüfung auf allen datenverarbeitenden Endpunkten |
+| Cross-Tenant Data Leakage | Verbindlicher `tenant_id`-Filter in jeder Retrieval-Abfrage |
+| Zugriff auf fremde Dokumente | Owner-, Benutzer- und Gruppen-ACL direkt im SQL-Prädikat |
+| Manipulierter Dateifilter | Dateiname schränkt nur innerhalb der bereits autorisierten Datenmenge ein |
+| Öffentliche Datenbank | `public_network_access_enabled = false`, delegiertes Subnetz, Private DNS |
+| Registry-/OpenAI-Secrets | User Assigned Managed Identity und minimal benötigte RBAC-Rollen |
+| Fehlerdetails im Frontend | Stabile `4xx`/`5xx`-Antworten, interne Details nur im Server-Log |
+| Halluzinierte Quellen | Abgleich aller Quellenlabels mit der autorisierten Retrieval-Menge |
+| Container-Eskalation | Ausführung als dedizierter Non-root-Benutzer |
 
-SSL-Verschlüsselung: Die PostgreSQL-Datenbank erzwingt sslmode='require'.
+## Bewusste Designentscheidungen
 
-Entwickelt als Teil eines professionellen Cloud- & AI-Engineering Portfolios.
+- **PostgreSQL statt zusätzlicher Vector Database:** Relationale Metadaten, Berechtigungen und Embeddings können transaktional gemeinsam verwaltet werden.
+- **Fail closed:** Fehlende Auth-Konfiguration, ungültige Token, nicht zuordenbare Altbestände oder unbelegte Antworten werden nicht stillschweigend akzeptiert.
+- **Autorisierung vor Prompt-Erstellung:** Nicht erlaubte Chunks verlassen die Datenbankabfrage nicht.
+- **Interner Ingress als Standard:** Öffentliche Erreichbarkeit ist eine explizite Deployment-Entscheidung.
 
-## Future Enhancements (Roadmap)
+## Nächste sinnvolle Ausbaustufen
 
-Dieses Projekt dient als voll funktionsfähiges MVP. Um die Architektur für hochskalierende Produktionsumgebungen zu erweitern, sind folgende Ausbaustufen geplant:
+- PostgreSQL Row-Level Security als zusätzliche Defense-in-Depth-Schicht
+- Dedizierte Migrationen und getrennte Datenbankrollen für Schema- und Runtime-Zugriff
+- Hybrid Search aus Vektor-, Volltext- und Re-Ranking-Stufe
+- Microsoft Graph-Auflösung für Entra Group-Overage-Claims
+- Application Insights, OpenTelemetry und LLM-Tracing ohne sensible Dokumentinhalte
+- Rate Limiting, Malware-Scanning und asynchrone Ingestion großer Dokumente
+- Automatisierte CI-Pipeline für Tests, Container-Scan und Terraform Security Checks
 
-*  Multi Container Deployment: Erstellung von Dockerfiles für Frontend und Backend und Orchestrierung via Docker Compose / Azure Container Apps.
+---
 
-*  Hybrid Search & Re-Ranking: Kombination aus Keyword-Suche (BM25) und semantischer Vektorsuche sowie Integration eines Cross-Encoders für präzisere Suchergebnisse.
-
-*  Enterprise Security (RBAC): Absicherung der Endpunkte durch Azure Entra ID (Active Directory) mit OAuth2 für rollenbasierte Zugriffskontrolle.
-
-*  Observability & LLM-Tracing: Integration von Azure Application Insights, um Token-Verbrauch, Latenzen und LLM-Halluzinationen in Echtzeit zu überwachen.
-
+Dieses Projekt ist Teil meines Cloud- und AI-Engineering-Portfolios. Es zeigt den Schritt vom funktionierenden RAG-Demo-Flow zu einer Architektur, die Sicherheitsgrenzen, Datenisolation und nachvollziehbare Antworten als Kernfunktionen behandelt.
