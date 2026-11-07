@@ -1,0 +1,9 @@
+# Versions that determine the bytes of the synthetic public demo package (Parquet output).
+# They equal the pins in ci/requirements.lock. With other versions the generated package can
+# differ from the reviewed values in tests/data/synthetic_ci_aggregate_fixture.json, and the
+# interactive demo then refuses to start (EV-02 evidence pin, fail closed).
+#
+#   python -m pip install -e '.[dev]' -c ci/demo-constraints.txt
+numpy==2.5.4
+pandas==2.3.3
+pyarrow==23.0.1

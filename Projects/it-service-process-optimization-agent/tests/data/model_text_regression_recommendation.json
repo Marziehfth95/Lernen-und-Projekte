@@ -1,0 +1,54 @@
+{
+  "description": "Regression fixture for the validator and guardrails. The wording of the recommendation text comes from a model-written recommendation (2026-10-18); every number and ID has been replaced with SYNTHETIC values that match the unit-test fixtures. This is not a record of a model run and not evidence about any dataset.",
+  "synthetic_values": true,
+  "recommendations": [
+    {
+      "recommendation_id": "recommendation_0123456789abcdef0000a001",
+      "problem_statement": "Incidents involving at least one repeated group visit are associated with a median observed case span approximately 56% longer than those without repeated group visits. This observational association does not establish causality, and repeated group visits may reflect necessary re-routing rather than inefficiency.",
+      "evidence_ids": [
+        "finding_0123456789abcdef0000a001"
+      ],
+      "observed_numerical_facts": [
+        {
+          "statement": "Incidents with repeated group visits have a median observed case span of 1,209,600.5 seconds.",
+          "evidence_id": "finding_0123456789abcdef0000a001",
+          "field_path": "measured_statistics.with_return_span_median_seconds",
+          "value": 1209600.5,
+          "unit": "seconds"
+        },
+        {
+          "statement": "Incidents without repeated group visits have a median observed case span of 777,600.0 seconds.",
+          "evidence_id": "finding_0123456789abcdef0000a001",
+          "field_path": "measured_statistics.without_return_span_median_seconds",
+          "value": 777600.0,
+          "unit": "seconds"
+        },
+        {
+          "statement": "The median observed case span ratio of incidents with repeated group visits over those without is approximately 1.56.",
+          "evidence_id": "finding_0123456789abcdef0000a001",
+          "field_path": "measured_statistics.span_median_ratio",
+          "value": 1.5555561985596709,
+          "unit": "ratio"
+        }
+      ],
+      "hypotheses": [
+        "Repeated group visits may contribute to longer observed case spans due to inefficiencies created by returning to earlier groups.",
+        "Repeated group visits may represent valid and necessary re-routing, reflecting case complexity rather than inefficiency.",
+        "Differences in incident complexity, volume, product type, or other factors may confound the association between repeated group visits and observed case spans."
+      ],
+      "data_limitations": [
+        "Cohorts differ in event volume and process complexity, limiting comparability.",
+        "No adjustments were made for product, impact, organization, censoring, or calendar time.",
+        "Repeated group visits can represent valid routing and do not necessarily indicate inefficiency.",
+        "Observed case span is a proxy and is not a verified measure of resolution time or active processing time."
+      ],
+      "suggested_process_improvement": "Before implementing interventions to reduce repeated group visits, perform a detailed qualitative and quantitative analysis to understand whether repeated group visits reflect inefficiency or necessary re-routing. Consider segmenting incident cohorts by product, impact, organization, or complexity. Pilot targeted process changes in controlled settings to assess impact.",
+      "expected_outcome_with_uncertainty": "If repeated group visits are a source of inefficiency, targeted interventions could reduce median observed case span duration, potentially improving incident resolution speed. However, if repeated group visits are necessary for complex cases, intervention may not reduce spans and could risk unintended disruptions.",
+      "proposed_follow_up_kpi": "Monitor the median observed case span and the frequency of repeated group visits per incident. Additionally, track incident resolution times verified by system logs and customer satisfaction indicators post any process changes.",
+      "implementation_risk": "Moderate risk due to potential misclassification of necessary repeated group visits as inefficiency; changes may disrupt valid routing and case handling if not carefully evaluated and piloted.",
+      "simulation": null,
+      "status": "VALIDATED",
+      "requires_human_approval": true
+    }
+  ]
+}

@@ -1,0 +1,90 @@
+[build-system]
+requires = ["hatchling>=1.27,<2"]
+build-backend = "hatchling.build"
+
+[project]
+name = "azure-it-service-process-optimizer"
+version = "0.7.0"
+description = "Evidence-grounded agentic AI for IT service process optimization (local demo; optional Azure boundary)"
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+license = "MIT"
+license-files = ["LICENSE", "THIRD_PARTY_NOTICES.md"]
+authors = [{ name = "Marzieh Fattahi" }]
+dependencies = [
+  "fastapi>=0.115,<1.0",
+  "langgraph>=1.0,<2.0",
+  "pandas>=2.2,<3.0",
+  "pydantic>=2.10,<3.0",
+  "pyarrow>=18.0,<24.0",
+  "sqlalchemy>=2.0.36,<3.0",
+  "uvicorn[standard]>=0.34,<1.0",
+]
+
+[project.optional-dependencies]
+# Cloud model and hosting dependencies are opt-in; mock mode needs none of them.
+agents = [
+  # Required by langchain-azure-ai 1.2.9+; explicit preview bound keeps uv resolution reproducible.
+  "azure-ai-contentunderstanding>=1.2.0b2,<2.0",
+  "azure-ai-projects>=2.0,<3.0",
+  "azure-identity>=1.19,<2.0",
+  "langchain-azure-ai[hosting]>=1.2.9,<2.0",
+  "langchain-openai>=1.0,<2.0",
+]
+# Offline XES ingestion only (Phase A). Runtime images never parse XES, so PM4Py and its
+# imaging/solver stack (matplotlib, Pillow, cvxopt) stay out of the deployed images.
+ingestion = [
+  "pm4py>=2.7.12,<3.0",
+]
+observability = [
+  "microsoft-opentelemetry>=1.4,<2.0",
+  "opentelemetry-api>=1.30,<2.0",
+  "opentelemetry-sdk>=1.30,<2.0",
+]
+cloud = [
+  "azure-identity>=1.19,<2.0",
+  "httpx>=0.28,<1.0",
+  "psycopg[binary]>=3.2,<4.0",
+  "PyJWT[crypto]>=2.10,<3.0",
+]
+dev = [
+  "azure-it-service-process-optimizer[ingestion]",
+  "httpx>=0.28,<1.0",
+  "pytest>=8.3,<9.0",
+  "PyYAML>=6.0,<7.0",
+  "ruff>=0.11,<1.0",
+]
+
+[project.scripts]
+process-optimizer-profile = "process_optimizer.data.cli:profile_main"
+process-optimizer-ingest = "process_optimizer.data.cli:ingest_main"
+process-optimizer-validate = "process_optimizer.data.cli:validate_main"
+process-optimizer-analyze = "process_optimizer.process_mining.cli:main"
+process-optimizer-agent-demo = "process_optimizer.agents.demo:main"
+process-optimizer-foundry-host = "process_optimizer.agents.hosting:main"
+process-optimizer-simulate = "process_optimizer.simulation.cli:main"
+process-optimizer-evaluate = "process_optimizer.evaluation.runner:main"
+process-optimizer-workflow-demo = "process_optimizer.workflow.cli:main"
+process-optimizer-migrate = "process_optimizer.persistence.cli:main"
+process-optimizer-aggregate-manifest = "process_optimizer.tools.manifest:main"
+process-optimizer-package-aggregates = "process_optimizer.deployment.aggregate_package:main"
+process-optimizer-deployment-validate = "process_optimizer.deployment.validation:main"
+process-optimizer-demo = "process_optimizer.demo.launcher:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/process_optimizer"]
+
+[tool.pytest.ini_options]
+addopts = "-ra"
+testpaths = ["tests"]
+markers = [
+  "model: opt-in tests that may invoke a configured paid model deployment",
+]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]

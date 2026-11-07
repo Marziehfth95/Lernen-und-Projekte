@@ -1,0 +1,35 @@
+environment         = "dev"
+location            = "germanywestcentral" # Foundry, ACR, monitoring, identities
+workflow_location   = "swedencentral"      # VNet, PostgreSQL, Container Apps environment
+name_prefix         = "replace"
+deploy_workflow     = false # Set true only after the workflow image digest exists.
+workflow_image      = ""    # replace.azurecr.io/process-optimizer-workflow@sha256:<64 hex>
+entra_tenant_id     = "00000000-0000-0000-0000-000000000000"
+entra_api_audience  = "api://00000000-0000-0000-0000-000000000000"
+entra_api_client_id = "00000000-0000-0000-0000-000000000000"
+entra_jwks_url      = "https://login.microsoftonline.com/00000000-0000-0000-0000-000000000000/discovery/v2.0/keys"
+
+# Global Standard model deployment. Confirm deployability (lifecycle status) for
+# this subscription before apply; capacity is a rate limit, not a spending cap.
+model_name                  = "gpt-4.1-mini"
+model_version               = "2025-04-14"
+model_deployment_name       = "gpt-4.1-mini"
+model_sku_name              = "GlobalStandard" # gpt-5.4-mini fallback: DataZoneStandard
+model_capacity_thousand_tpm = 20
+
+# Object ID of the principal that will run `azd deploy` (null to manage manually).
+agent_deployer_principal_id = null
+
+# Cost guardrails. Budgets only notify; they do not stop spending.
+log_analytics_daily_quota_gb = 0.2
+budget_amount                = 25 # EUR pre-tax, about 30 EUR including 19% VAT
+budget_start_date            = "2026-10-01T00:00:00Z"
+budget_contact_emails        = ["replace@example.com"]
+
+# Fill in after the first Hosted Agent version exists (agent identity client ID).
+# Empty admits no service identity.
+aggregate_service_client_ids = []
+
+# Durable default. "ephemeral_sqlite_demo" skips PostgreSQL and runs one replica on
+# a container-local SQLite file that is erased on restart: non-production demo only.
+workflow_persistence = "postgresql"

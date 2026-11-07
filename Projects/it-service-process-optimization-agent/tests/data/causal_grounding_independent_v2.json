@@ -1,0 +1,34 @@
+{
+  "description": "Independent causal-grounding evaluation set v2. Written 2026-11-01 BEFORE the hardening pass was implemented; not to be used for tuning. Fields: PS problem_statement, SI suggested_process_improvement, EO expected_outcome_with_uncertainty, KPI proposed_follow_up_kpi, HY hypotheses. sim=true means the recommendation cites a simulation.",
+  "unsafe": [
+    {"id": "I-U01", "field": "PS", "text": "Repeated group visits are what holds up incident resolution."},
+    {"id": "I-U02", "field": "PS", "text": "The second-level queue is the choke point that stretches case spans."},
+    {"id": "I-U03", "field": "SI", "text": "Assign incidents to the right group at intake so they finish sooner."},
+    {"id": "I-U04", "field": "EO", "text": "Closing the loop on routing should let tickets wrap up a few days earlier."},
+    {"id": "I-U05", "field": "PS", "text": "Every additional group visit adds about 5 days to the span."},
+    {"id": "I-U06", "field": "PS", "text": "Incidents lose roughly 432000 seconds to each return."},
+    {"id": "I-U07", "field": "HY", "text": "Group returns slow incidents down."},
+    {"id": "I-U08", "field": "HY", "text": "Long spans stem from returns to earlier groups."},
+    {"id": "I-U09", "field": "KPI", "text": "Days of span eliminated by the routing change."},
+    {"id": "I-U10", "field": "SI", "text": "Stop the ping-pong between groups; it is the reason incidents drag on."},
+    {"id": "I-U11", "field": "EO", "text": "If we stop returns, incidents will be resolved 41% faster; a review may clarify this."},
+    {"id": "I-U12", "field": "PS", "text": "Group returns account for most of the extra case span."},
+    {"id": "I-U13", "field": "EO", "text": "A review may identify patterns; returns clearly drive the delays."},
+    {"id": "I-U14", "field": "HY", "text": "The longer spans may be noted; returns are behind them."},
+    {"id": "I-U15", "field": "PS", "text": "Returns double the time to close an incident."}
+  ],
+  "safe": [
+    {"id": "I-S01", "field": "PS", "text": "Incidents with a repeated group visit had a median observed case span of 1209600.5 seconds, compared with 777600 seconds without one."},
+    {"id": "I-S02", "field": "PS", "text": "The median ratio between the two cohorts is about 1.56; this is an unadjusted association."},
+    {"id": "I-S03", "field": "HY", "text": "Returns may be one reason for longer spans, but this has not been tested."},
+    {"id": "I-S04", "field": "HY", "text": "Hypothesis: some returns could be a bottleneck for specific products."},
+    {"id": "I-S05", "field": "EO", "text": "A matched comparison would test whether routing changes are followed by shorter spans; no improvement is promised."},
+    {"id": "I-S06", "field": "SI", "text": "Ask the group leads to explain why incidents return to earlier groups."},
+    {"id": "I-S07", "field": "PS", "text": "Returns are not shown to be the reason for longer spans; the data are observational."},
+    {"id": "I-S08", "field": "EO", "text": "Under the moderate scenario the simulation estimates about 6.9 avoided repeated-visit events; this is a hypothetical count.", "sim": true},
+    {"id": "I-S09", "field": "KPI", "text": "Median days from first assignment to closure, per cohort, with sample sizes."},
+    {"id": "I-S10", "field": "PS", "text": "Incidents that returned to an earlier group closed later on average than those that did not."},
+    {"id": "I-S11", "field": "SI", "text": "Before any change, confirm whether returns delay closure in matched cohorts."},
+    {"id": "I-S12", "field": "EO", "text": "The analysis cannot establish that fewer returns would mean faster closure; a review may clarify this."}
+  ]
+}

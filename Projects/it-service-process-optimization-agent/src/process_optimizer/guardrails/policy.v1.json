@@ -1,0 +1,306 @@
+{
+  "policy_id": "process-optimizer-guardrails",
+  "policy_schema_version": "2.0.0",
+  "small_group_threshold": 10,
+  "input": {
+    "max_goal_characters": 2000,
+    "max_base64_run_characters": 80,
+    "injection_patterns": [
+      "\\bignore\\s+(?:all\\s+|any\\s+)?(?:the\\s+)?(?:previous|prior|above|earlier)\\b",
+      "\\bdisregard\\s+(?:all\\s+|any\\s+)?(?:the\\s+)?(?:previous|prior|above|earlier|system)\\b",
+      "\\bforget\\s+(?:all\\s+|your\\s+)?(?:previous\\s+)?instructions\\b",
+      "\\b(?:you\\s+are\\s+now|act\\s+as|pretend\\s+to\\s+be|from\\s+now\\s+on\\s+you)\\b",
+      "\\b(?:system|developer|assistant)\\s*(?:prompt|message|role)\\s*[:=]",
+      "\\bnew\\s+instructions?\\s*:",
+      "\\bjailbreak\\b|\\bDAN\\s+mode\\b",
+      "\\bignoriere\\s+(?:alle\\s+)?(?:vorherigen|bisherigen|obigen)\\b",
+      "\\bvergiss\\s+(?:alle\\s+)?(?:vorherigen\\s+)?anweisungen\\b",
+      "\\b(?:requested_tools|tool_calls?|function_call|response_format|json_schema)\\b",
+      "\\b(?:approve|approval|submit|create_ticket|execute)\\s*\\(",
+      "https?://|www\\.",
+      "```",
+      "<\\s*/?\\s*(?:script|system|im_start|im_end)\\b"
+    ]
+  },
+  "tools": {
+    "analyst": [],
+    "investigator": [
+      "get_process_overview",
+      "get_bottleneck_findings",
+      "analyze_group_handoffs",
+      "compare_process_cohorts",
+      "inspect_lifecycle_patterns",
+      "get_evidence_details"
+    ],
+    "optimizer": [
+      "simulate_group_transition_reduction"
+    ]
+  },
+  "output": {
+    "assertive_causal_fields": [
+      "problem_statement",
+      "suggested_process_improvement",
+      "expected_outcome_with_uncertainty"
+    ],
+    "assertive_causal_patterns": [
+      "\\bleads?\\s+to\\b",
+      "\\bdrives?\\b",
+      "\\bdue\\s+to\\b",
+      "\\bwill\\s+(?:reduce|shorten|eliminate|improve|cut|prevent)\\b",
+      "\\beliminates?\\b",
+      "\\bguarantees?\\b"
+    ],
+    "savings_fields": [
+      "problem_statement",
+      "hypotheses",
+      "suggested_process_improvement",
+      "expected_outcome_with_uncertainty",
+      "proposed_follow_up_kpi",
+      "implementation_risk"
+    ],
+    "savings_patterns": [
+      "(?:€|\\$|£)\\s*\\d|\\d\\s*(?:€|\\$|£)",
+      "\\bfull[-\\s]time\\s+equivalents?\\b",
+      "\\b(?:hours?|days?|minutes?)\\s+saved\\b",
+      "\\bsav(?:e|es|ed|ing|ings)\\b",
+      "\\bcost\\s+(?:reduction|savings?|avoidance|benefit)s?\\b",
+      "\\breturn\\s+on\\s+investment\\b",
+      "\\bpayback\\b"
+    ],
+    "savings_acronym_patterns": [
+      "\\b(?:EUR|USD|GBP|CHF)\\b",
+      "\\bFTEs?\\b",
+      "\\bROI\\b"
+    ],
+    "hypothesis_causal_patterns": [
+      "\\bleads?\\s+to\\b",
+      "\\bdrives?\\b",
+      "\\bdue\\s+to\\b",
+      "\\bcontribut(?:e|es|ed|ing)\\s+to\\b",
+      "\\bresponsible\\s+for\\b",
+      "\\bexplains?\\b",
+      "\\bwill\\s+(?:reduce|shorten|eliminate|improve|cut|prevent)\\b",
+      "\\beliminates?\\b",
+      "\\bguarantees?\\b",
+      "\\bprolong\\w*\\b",
+      "\\blengthen\\w*\\b",
+      "\\bincreas(?:e|es|ed|ing)\\b",
+      "\\bshorten\\w*\\b"
+    ],
+    "hypothesis_label_patterns": [
+      "\\b(?:may|might|could|possibly|potentially|plausibly|perhaps)\\b",
+      "\\bhypothes(?:is|es|ize|ise)\\b",
+      "\\b(?:suggests?|is\\s+consistent\\s+with)\\b",
+      "\\b(?:vermutlich|möglicherweise|könnte|kann)\\b"
+    ],
+    "hypothesis_prefix_pattern": "^\\s*(?:hypothes(?:is|es|e)|vermutung)\\s*:",
+    "intervention_claim": {
+      "fields": [
+        "problem_statement",
+        "suggested_process_improvement",
+        "expected_outcome_with_uncertainty",
+        "proposed_follow_up_kpi"
+      ],
+      "measurement_fields": [
+        "proposed_follow_up_kpi"
+      ],
+      "clause_boundary_pattern": "\\.(?!\\d)|[;:!?]|,\\s*(?:and|but|though|although|while|whereas|so|yet)\\b|\\s+but\\s+",
+      "scope_break_pattern": "\\b(?:and|then|so)\\b",
+      "max_gap_characters": 60,
+      "change_patterns": [
+        "\\breduc(?:e|es|ed|ing|tions?)\\b",
+        "\\bminimi[sz](?:e|es|ed|ing|ation)\\b",
+        "\\beliminat(?:e|es|ed|ing|ion)\\b",
+        "\\bavoid(?:s|ed|ing|ance)?\\b",
+        "\\bremov(?:e|es|ed|ing|al)\\b",
+        "\\bcut(?:s|ting)?\\b",
+        "\\blower(?:s|ed|ing)\\b|\\blower\\s+(?:the|its|their|this)\\b",
+        "\\bdecreas(?:e|es|ed|ing)\\b",
+        "\\bshorten(?:s|ed|ing)?\\b",
+        "\\bspeed(?:s|ing)?\\s*-?\\s*up\\b",
+        "\\baccelerat(?:e|es|ed|ing|ion)\\b",
+        "\\bimprov(?:e|es|ed|ing|ement|ements)\\b",
+        "\\bprolong(?:s|ed|ing)?\\b",
+        "\\blengthen(?:s|ed|ing)?\\b",
+        "\\bstreamlin(?:e|es|ed|ing)\\b",
+        "\\bshr(?:ink|inks|inking|ank|unk)\\b",
+        "\\bfix(?:es|ed|ing)?\\b",
+        "\\bremed(?:y|ies|ied|ying)\\b",
+        "\\btighten(?:s|ed|ing)?\\b",
+        "\\bfree(?:s|d|ing)?(?:\\s+up)?\\b",
+        "\\bbenefit(?:s|ed|ing|ting)?\\b",
+        "\\bprevent(?:s|ed|ing|ion)?\\b",
+        "\\badds?\\s+(?:delay|time|days?|hours?)\\b"
+      ],
+      "comparative_patterns": [
+        "\\bfewer\\b",
+        "\\bless\\b"
+      ],
+      "predictive_patterns": [
+        "\\b(?:would|will|should|could|can|may|might)\\b",
+        "\\b(?:expect\\w*|likely|anticipat\\w*|translat\\w*|yield\\w*|lead\\w*|result\\w*)\\b",
+        "\\b(?:means?|once|if|let|lets|allow\\w*|enabl\\w*)\\b"
+      ],
+      "outcome_patterns": [
+        "\\b(?:case\\s+)?spans?\\b",
+        "\\bresolution(?:\\s+times?)?\\b",
+        "\\b(?:elapsed|cycle|lead|handling|processing|waiting)\\s+times?\\b",
+        "\\btime\\s+to\\s+\\w+\\b",
+        "\\b(?:closure|close|delays?|durations?|throughput|turnaround|backlog|workload)\\b",
+        "\\bSLAs?\\b|\\bservice[-\\s]level\\b",
+        "\\b(?:sooner|faster|quicker|more\\s+quickly)\\b",
+        "\\b(?:costs?|effort|capacity|gap)\\b",
+        "\\bhandling\\b"
+      ],
+      "measurement_claim_patterns": [
+        "\\b(?:achieved|gained|realized|realised|obtained|delivered|produced|brought|caused|driven|attributable|resulting)\\b",
+        "\\b(?:thanks\\s+to|as\\s+a\\s+result)\\b",
+        "\\b(?:will|would|should|expected|expect|likely)\\b"
+      ],
+      "direct_negation_pattern": "(?:\\b(?:not|never|no)|n't)(?:\\s+\\w+){0,2}\\s*$",
+      "scoped_exemption_patterns": [
+        "\\b(?:(?:does|do|did|is|are|was|were)\\s+not|cannot|can't|doesn't|don't)(?:\\s+\\w+){0,3}?\\s+(?:show|establish|imply|demonstrat|prove|indicat|mean|guarantee|promise|assum|conclud|infer|claim)\\w*",
+        "\\bnot\\s+(?:established|shown|implied|promised|demonstrated|guaranteed|proven)\\b",
+        "\\bno\\s+evidence\\b",
+        "\\b(?:test|examine|assess|measure|check|evaluate|investigate|review|identify|determine|clarify|verify|explore)\\w*\\s+(?:whether|if|which)\\b",
+        "\\bwhether\\b"
+      ],
+      "nominal_non_promise_patterns": [
+        "\\bno\\b[^.;:!?]{0,80}?\\b(?:is|are|was|were|can\\s+be|should\\s+be|will\\s+be)\\s+(?:promised|implied|expected|claimed|guaranteed|established|shown|assumed|predicted)\\b"
+      ],
+      "postfix_non_promise_patterns": [
+        "^[^.;:!?]{0,80}?\\b(?:is|are|was|were)\\s+not\\s+(?:promised|implied|expected|claimed|guaranteed|established|shown|assumed|predicted)\\b"
+      ],
+      "simulation_label_patterns": [
+        "\\b(?:scenario|hypothetical|simulat\\w*)\\b"
+      ]
+    },
+    "inefficiency_claim": {
+      "fields": [
+        "problem_statement",
+        "suggested_process_improvement",
+        "expected_outcome_with_uncertainty",
+        "proposed_follow_up_kpi"
+      ],
+      "term_patterns": [
+        "\\binefficien(?:t|cy|cies|tly)\\b",
+        "\\bwaste(?:s|d|ful)?\\b",
+        "\\bunnecessar(?:y|ily)\\b",
+        "\\bneedless(?:ly)?\\b",
+        "\\bavoidable\\b",
+        "\\bredundant\\b"
+      ],
+      "local_exemption_pattern": "(?:\\b(?:not|no|never|nor|without|potentially|possibly|probably|perhaps)|\\brather\\s+than|\\b(?:may|might|could)\\s+be|n't)(?:\\s+\\w+){0,2}\\s*$",
+      "scoped_exemption_patterns": [
+        "\\b(?:(?:does|do|did|is|are|was|were)\\s+not|cannot|can't|doesn't|don't)(?:\\s+\\w+){0,3}?\\s+(?:show|establish|imply|demonstrat|prove|indicat|mean|guarantee|promise|assum|conclud|infer|claim)\\w*",
+        "\\bnot\\s+(?:established|shown|implied|promised|demonstrated|guaranteed|proven)\\b",
+        "\\bno\\s+evidence\\b",
+        "\\b(?:test|examine|assess|measure|check|evaluate|investigate|review|identify|determine|clarify|verify|explore)\\w*\\s+(?:whether|if|which)\\b",
+        "\\bwhether\\b",
+        "\\bif\\b",
+        "\\bdistinguish\\w*\\s+between\\b"
+      ]
+    },
+    "expected_outcome": {
+      "field": "expected_outcome_with_uncertainty",
+      "qualifier_patterns": [
+        "\\bno\\b[^.;:!?]{0,80}?\\b(?:is|are|was|were|can\\s+be|will\\s+be)?\\s*(?:promised|implied|expected|claimed|guaranteed|established|shown|assumed|predicted)\\b",
+        "\\b(?:(?:does|do|did|is|are|was|were)\\s+not|cannot|can't|doesn't|don't)(?:\\s+\\w+){0,3}?\\s+(?:show|establish|imply|demonstrat|prove|indicat|mean|guarantee|promise|assum|conclud|infer|claim)\\w*",
+        "\\bnot\\s+(?:established|shown|implied|promised|demonstrated|guaranteed|proven)\\b",
+        "\\bno\\s+evidence\\b",
+        "\\b(?:review|pilot|analysis|study|comparison|assessment|evaluation|investigation)\\b[^.;:!?]{0,60}?\\b(?:may|might|could|would|will|can|should|to)\\s+(?:identify|clarify|determine|measure|examine|test|assess|describe|document|quantify|check|establish\\s+whether|show\\s+whether)\\b",
+        "\\brequires?\\s+(?:a\\s+|an\\s+)?(?:controlled\\s+|matched\\s+)?(?:pilot|review|validation|evaluation)\\b",
+        "\\b(?:will|would|does|do|can|could|may|might)\\s+not(?:\\s+by\\s+itself)?\\s+(?:reduce|shorten|improve|change|lower|cut|speed)\\b",
+        "\\b(?:it|this|they)\\s+(?:may|might|could|would|will|can|should)\\s+(?:identify|clarify|determine|measure|examine|test|assess|describe|document|quantify|check)\\b"
+      ],
+      "simulation_label_patterns": [
+        "\\b(?:scenario|hypothetical|simulat\\w*)\\b"
+      ]
+    }
+  },
+  "hosted_runtime": {
+    "max_model_calls_per_run": 6,
+    "max_model_calls_per_process": 8,
+    "max_model_retries": 0,
+    "max_output_tokens": 2048,
+    "max_input_tokens_per_call": 10000,
+    "max_run_tokens": 40000,
+    "run_deadline_seconds": 240
+  },
+  "claim_evidence": {
+    "known_evidence_interpretations": [
+      "observational_non_causal"
+    ],
+    "claim_types": [
+      {
+        "name": "causal_attribution",
+        "reason_code": "UNSUPPORTED_CAUSAL_ATTRIBUTION",
+        "required_evidence_interpretations": [
+          "causal_effect_estimate"
+        ],
+        "fields": [
+          "problem_statement",
+          "suggested_process_improvement",
+          "expected_outcome_with_uncertainty",
+          "proposed_follow_up_kpi",
+          "hypotheses"
+        ],
+        "labelled_hypotheses_exempt": true,
+        "scoped_exemption_patterns": [
+          "\\bif\\b",
+          "\\bwhether\\b"
+        ],
+        "frames": [
+          "\\b(?:is|are|was|were|remains?|seems?\\s+to\\s+be|appears?\\s+to\\s+be)\\s+(?:\\w+\\s+){0,3}?(?P<rel>(?:bottleneck|reason|cause|driver|root\\s+cause|source|culprit|explanation)s?)\\s+(?:behind|for|of)\\b",
+          "\\b(?P<rel>(?:stems?|stemmed|stemming|arises?|arose|arising)\\s+from)\\b",
+          "\\b(?P<rel>(?:attributable|responsible)\\s+(?:to|for))\\b",
+          "\\b(?P<rel>(?:is|are|was|were)\\s+behind)\\b",
+          "\\b(?P<rel>accounts?\\s+for|accounted\\s+for)\\b(?=[^.;:!?]{0,40}\\b(?:spans?|delays?|time|durations?|extra|longer)\\b)"
+        ]
+      },
+      {
+        "name": "timing_effect",
+        "reason_code": "UNSUPPORTED_TIMING_EFFECT",
+        "required_evidence_interpretations": [
+          "intervention_effect_measurement"
+        ],
+        "fields": [
+          "problem_statement",
+          "suggested_process_improvement",
+          "expected_outcome_with_uncertainty",
+          "proposed_follow_up_kpi",
+          "hypotheses"
+        ],
+        "labelled_hypotheses_exempt": true,
+        "scoped_exemption_patterns": [],
+        "frames": [
+          "\\b(?:so\\s+(?:that\\s+)?|in\\s+order\\s+to|to\\s+(?:get|make|have|let)|would|will|could|should|can|if|once)\\b[^.;:!?]{0,50}(?P<rel>\\b(?:clos|resolv|handl|finish|complet)\\w*\\b)[^.;:!?]{0,25}\\b(?:earlier|sooner|faster|quicker|more\\s+quickly|in\\s+less\\s+time)\\b",
+          "\\b(?:so\\s+(?:that\\s+)?|in\\s+order\\s+to|to\\s+(?:get|make|have|let)|would|will|could|should|can|if|once)\\b[^.;:!?]{0,50}(?P<rel>\\b(?:earlier|sooner|faster|quicker|more\\s+quickly|in\\s+less\\s+time)\\b)\\s+(?:closure|resolution|completion)\\b"
+        ]
+      },
+      {
+        "name": "quantified_effect",
+        "reason_code": "UNSUPPORTED_QUANTIFIED_EFFECT",
+        "required_evidence_interpretations": [
+          "intervention_effect_measurement"
+        ],
+        "fields": [
+          "problem_statement",
+          "suggested_process_improvement",
+          "expected_outcome_with_uncertainty",
+          "proposed_follow_up_kpi",
+          "hypotheses"
+        ],
+        "labelled_hypotheses_exempt": false,
+        "scoped_exemption_patterns": [],
+        "frames": [
+          "(?P<rel>\\b(?:each|every|per)\\s+(?:additional\\s+|extra\\s+|single\\s+)?(?:group\\s+)?(?:returns?|revisits?|visits?|handoffs?|hand-offs?|transfers?|reassignments?)\\b)[^.;:!?]{0,60}\\b(?:\\d[\\d,.]*|a\\s+few|several|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|fifteen|twenty|thirty|forty|fifty|hundred)\\s*(?:%|percent|per\\s+cent|seconds?|minutes?|hours?|days?|weeks?|months?)",
+          "\\b(?:\\d[\\d,.]*|a\\s+few|several|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|fifteen|twenty|thirty|forty|fifty|hundred)\\s*(?:extra\\s+|additional\\s+)?(?:%|percent|per\\s+cent|seconds?|minutes?|hours?|days?|weeks?|months?)[^.;:!?]{0,60}(?P<rel>\\b(?:each|every|per)\\s+(?:additional\\s+|extra\\s+|single\\s+)?(?:group\\s+)?(?:returns?|revisits?|visits?|handoffs?|hand-offs?|transfers?|reassignments?)\\b)",
+          "\\b(?P<rel>costs?|adds?|added|saves?|saved|loses?|lost|takes?|took|shaves?)\\b[^.;:!?]{0,30}\\b(?:\\d[\\d,.]*|a\\s+few|several|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|fifteen|twenty|thirty|forty|fifty|hundred)\\s*(?:extra\\s+|additional\\s+|more\\s+)?(?:%|percent|per\\s+cent|seconds?|minutes?|hours?|days?|weeks?|months?)",
+          "\\b(?:\\d[\\d,.]*|a\\s+few|several|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|fifteen|twenty|thirty|forty|fifty|hundred)\\s*(?P<rel>(?:extra|additional))\\s+(?:%|percent|per\\s+cent|seconds?|minutes?|hours?|days?|weeks?|months?)",
+          "\\b(?:\\d[\\d,.]*|a\\s+few|several|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|fifteen|twenty|thirty|forty|fifty|hundred)\\s*(?:%|percent|per\\s+cent|seconds?|minutes?|hours?|days?|weeks?|months?)\\s+(?P<rel>(?:extra|additional|saved|lost))\\b"
+        ]
+      }
+    ]
+  }
+}

@@ -21,6 +21,7 @@ Dieser Bereich soll zeigen:
 - `agentic-finops-sre/`
 - `ai vulnerability analyzer/`
 - `azure-enterprise-rag`
+- [`it-service-process-optimization-agent/`](it-service-process-optimization-agent/) – Evidenzbasierte agentische KI für IT-Service-Management: Process Mining, LangGraph-Agent mit lokalem LLM (Ollama), deterministische Guardrails, Human-in-the-Loop-Freigabe und Audit-Trail
 
 ## Gute Regel
 

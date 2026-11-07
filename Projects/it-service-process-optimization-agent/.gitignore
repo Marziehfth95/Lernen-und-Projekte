@@ -1,0 +1,67 @@
+# Environment files and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.pfx
+secrets/
+
+# Python environments and build artifacts
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+build/
+dist/
+
+# Local data (retain directory placeholders)
+# Generated synthetic public demo package (scripts/prepare_public_demo_data.sh)
+demo-data/
+data/raw/*
+!data/raw/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+
+# Local persistence, logs, and checkpoints
+*.db
+*.sqlite
+*.sqlite3
+*.log
+deploy/aggregate-package/*
+!deploy/aggregate-package/.gitkeep
+logs/
+checkpoints/
+*.checkpoint
+
+# Terraform generated and sensitive files
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+crash.log
+crash.*.log
+
+# Editors and operating systems
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.tfplan
+
+# Local azd environments (endpoints, IDs; never commit)
+.azure/

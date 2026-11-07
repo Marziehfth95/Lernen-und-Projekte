@@ -1,0 +1,30 @@
+{
+  "description": "Reviewed expected values for the SYNTHETIC CI aggregate package built by scripts/generate_synthetic_aggregate_package.py. Not BPI Challenge 2013 data and not evidence. Values belong to ci/requirements.lock (Parquet bytes embed the writer version).",
+  "fixture_version": "synthetic-ci-fixture-v1",
+  "seed": 20261101,
+  "case_count": 600,
+  "dataset_name": "SYNTHETIC CI FIXTURE - NOT BPI CHALLENGE 2013 - NOT EVIDENCE",
+  "analysis_run_id": "run_60efe2fdce50ecd27b41f404",
+  "artifacts": {
+    "aggregate_manifest.json": "7b7dc7950845f10a53c8e3c040e24fed97a8322bfcaf215a3527209914eac8dc",
+    "evidence_contract.json": "84f7e83f89d40fa210d030bf56427e574d67cd494404ef36214866ba81d477b4",
+    "handoff_analysis.parquet": "29fc885dcc4874f289cdc2fbb09db2b5c95af34ae2663f1126bbc4ad0377a341",
+    "handoff_cohort_comparison.json": "b4b93939b558450ae75e49b9fea9552f5f8c7364ad76b8bfe2442a85b0a505fa",
+    "lifecycle_patterns.parquet": "03544b58eeb8bb2adf2949a50925648f84cadb5e79e1145fab5497111571d9c5",
+    "process_overview.json": "b75c74769fec32f91997ec5e31dd66eed9a480454fd1d0aad8e954a93c86328c",
+    "semantic_validation_report.json": "0b5f73c94853d07a6dc6b7af97c7103b3e8545f95e2dff0a5871cc55172dff6d"
+  },
+  "finding_count": 8,
+  "served_finding_count": 3,
+  "suppressed_finding_count": 5,
+  "served_evidence_sha256": "15f30d73f4a92ecc7daaf9e3bdccbc651dcafccfb9a1a96c799aecb2c46ca408",
+  "expected_demo_checks": 25,
+  "expected_demo_known_gaps": [
+    {
+      "case": "plain causal verb 'cause' and agentive 'delay closure' in problem_statement",
+      "status": "OPEN_NOT_SAFE",
+      "human_decision": "REJECTED"
+    }
+  ],
+  "expected_demo_result_digest": "ed4b8f0eb26fc8eecc440353d7ea05f64261a9084a057f19e9e95c5fad7ae264"
+}

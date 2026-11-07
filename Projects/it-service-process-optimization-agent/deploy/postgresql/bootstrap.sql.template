@@ -1,0 +1,121 @@
+-- Phase 7B.3 PostgreSQL Flexible Server Entra bootstrap template.
+--
+-- SUPERSEDED (2026-10-30) by process_optimizer.persistence.bootstrap and the
+-- caj-dbboot / caj-migrate Container Apps jobs (infra/terraform/database_jobs.tf).
+-- Reasons: psql is not available inside the private VNet, and the table grants
+-- below must be issued by the table owner (the migration role), not by the
+-- Entra administrator. Kept for reference only; do not execute.
+--
+-- Execute only after explicit deployment approval, while connected to the
+-- dedicated process_optimizer database as its configured Entra administrator:
+--
+-- psql "host=<server>.postgres.database.azure.com dbname=process_optimizer sslmode=require" \
+--   -v runtime_principal_name='<workflow-managed-identity-name>' \
+--   -v runtime_object_id='<workflow-managed-identity-object-id>' \
+--   -v migration_principal_name='<migration-managed-identity-name>' \
+--   -v migration_object_id='<migration-managed-identity-object-id>' \
+--   -f deploy/postgresql/bootstrap.sql.template
+--
+-- Values are passed separately by psql. Do not substitute this file, store
+-- access tokens in it, or execute it from the application runtime identity.
+
+\set ON_ERROR_STOP on
+
+\if :{?runtime_principal_name}
+\else
+  \echo 'runtime_principal_name is required'
+  \quit
+\endif
+\if :{?runtime_object_id}
+\else
+  \echo 'runtime_object_id is required'
+  \quit
+\endif
+\if :{?migration_principal_name}
+\else
+  \echo 'migration_principal_name is required'
+  \quit
+\endif
+\if :{?migration_object_id}
+\else
+  \echo 'migration_object_id is required'
+  \quit
+\endif
+
+-- Bind each PostgreSQL role to one exact managed-identity object ID. The
+-- conditional makes a reviewed re-run harmless when the mapping already exists.
+SELECT format(
+  'SELECT * FROM pg_catalog.pgaadauth_create_principal_with_oid(%L, %L, %L, false, false)',
+  :'runtime_principal_name', :'runtime_object_id', 'service'
+)
+WHERE NOT EXISTS (
+  SELECT 1
+  FROM pg_catalog.pgaadauth_list_principals(false)
+  WHERE rolename = :'runtime_principal_name'
+) \gexec
+
+SELECT format(
+  'SELECT * FROM pg_catalog.pgaadauth_create_principal_with_oid(%L, %L, %L, false, false)',
+  :'migration_principal_name', :'migration_object_id', 'service'
+)
+WHERE NOT EXISTS (
+  SELECT 1
+  FROM pg_catalog.pgaadauth_list_principals(false)
+  WHERE rolename = :'migration_principal_name'
+) \gexec
+
+-- The database is dedicated to this application. Remove implicit public
+-- connection/schema-create privileges, then grant each identity only its role.
+SELECT format('REVOKE CONNECT ON DATABASE %I FROM PUBLIC', current_database()) \gexec
+REVOKE CREATE ON SCHEMA public FROM PUBLIC;
+
+SELECT format(
+  'GRANT CONNECT ON DATABASE %I TO %I', current_database(), :'migration_principal_name'
+) \gexec
+SELECT format(
+  'GRANT CONNECT ON DATABASE %I TO %I', current_database(), :'runtime_principal_name'
+) \gexec
+
+SELECT format(
+  'CREATE SCHEMA IF NOT EXISTS process_optimizer AUTHORIZATION %I',
+  :'migration_principal_name'
+) \gexec
+SELECT format(
+  'ALTER SCHEMA process_optimizer OWNER TO %I', :'migration_principal_name'
+) \gexec
+SELECT format(
+  'GRANT USAGE, CREATE ON SCHEMA process_optimizer TO %I',
+  :'migration_principal_name'
+) \gexec
+SELECT format(
+  'GRANT USAGE ON SCHEMA process_optimizer TO %I', :'runtime_principal_name'
+) \gexec
+
+-- Apply runtime privileges only to existing, explicitly named workflow tables.
+-- Run this template once before migration (identity/schema bootstrap) and again
+-- after the migration (table grants). New tables require an explicit review.
+SELECT format(
+  'GRANT SELECT, INSERT ON TABLE process_optimizer.%I TO %I',
+  table_name,
+  :'runtime_principal_name'
+)
+FROM unnest(ARRAY['recommendations', 'approval_decisions', 'audit_events']) AS table_name
+WHERE to_regclass(format('process_optimizer.%I', table_name)) IS NOT NULL \gexec
+
+SELECT format(
+  'GRANT SELECT, INSERT, UPDATE ON TABLE process_optimizer.%I TO %I',
+  table_name,
+  :'runtime_principal_name'
+)
+FROM unnest(ARRAY[
+  'approval_requests',
+  'improvement_actions',
+  'notification_outbox'
+]) AS table_name
+WHERE to_regclass(format('process_optimizer.%I', table_name)) IS NOT NULL \gexec
+
+SELECT format(
+  'GRANT SELECT ON TABLE process_optimizer.schema_migrations TO %I',
+  :'runtime_principal_name'
+)
+WHERE to_regclass('process_optimizer.schema_migrations') IS NOT NULL \gexec

@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Process Optimizer Demo</title>
+<link rel="stylesheet" href="app.css">
+<script src="app.js" defer></script>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <div class="logo" aria-hidden="true">PO</div>
+    <div>
+      <h1>IT Service Process Optimizer</h1>
+      <p class="sub">Incident process evidence, investigation, what-if and governed approval</p>
+    </div>
+  </div>
+  <div class="badges" id="mode-badges"></div>
+</header>
+
+<div class="banner warn hidden" id="policy-banner" role="status"></div>
+
+<section class="rolebar" aria-label="Demo role switcher">
+  <div class="rolebar-head">
+    <span class="eyebrow">Acting as</span>
+    <span class="muted small">Synthetic local identities. The server authorizes every action, not this page.</span>
+  </div>
+  <div class="roles" id="roles" role="radiogroup" aria-label="Demo role"></div>
+</section>
+
+<section class="legend" aria-label="What you are looking at">
+  <span class="eyebrow">What you are looking at</span>
+  <ul class="legend-items">
+    <li><span class="kind kind-ai">REAL LOCAL AI</span> Text written by a real model (<span id="legend-model">configured in Ollama</span>) running on this laptop in Ollama. Probabilistic; always checked before anyone can act on it.</li>
+    <li><span class="kind kind-mock">DETERMINISTIC MOCK</span> Scripted stand-in for the model (the default). Same tools, checks and approval; the text is not AI-generated.</li>
+    <li><span class="kind kind-evidence">MEASURED EVIDENCE</span> Aggregates measured by the process-mining pipeline from the event log named here: <span id="legend-dataset">the verified aggregate package</span>. Observational, not causal.</li>
+    <li><span class="kind kind-sim">HYPOTHETICAL WHAT-IF</span> Scenario arithmetic under assumptions you set. Not a measurement and not a prediction.</li>
+    <li><span class="kind kind-ticket">LOCAL TICKET</span> Created in a throw-away local database only after a human Process Owner approves. Nothing is sent to any external system.</li>
+  </ul>
+</section>
+
+<nav class="tabs" aria-label="Sections" id="tabs">
+  <button data-tab="evidence" class="active">1 · Evidence</button>
+  <button data-tab="investigate">2 · Investigate</button>
+  <button data-tab="whatif">3 · What-if</button>
+  <button data-tab="approvals">4 · Approvals</button>
+  <button data-tab="tickets">5 · Tickets</button>
+  <button data-tab="audit">6 · Audit</button>
+  <button data-tab="safety">Safety &amp; limits</button>
+</nav>
+
+<main>
+  <section class="panel" id="tab-evidence">
+    <div class="panel-head">
+      <div>
+        <h2>Measured process evidence <span class="kind kind-evidence">MEASURED EVIDENCE</span></h2>
+        <p class="muted">Every number on this page comes from an authenticated aggregate tool over the verified aggregate package (<span id="evidence-dataset">dataset named by the server</span>). The page computes or types in no figures.</p>
+      </div>
+      <button class="btn" id="reload-evidence">Reload from server</button>
+    </div>
+    <div id="evidence-error"></div>
+    <div class="kpis" id="kpis"></div>
+    <div class="grid2">
+      <div class="card" id="card-cohort"></div>
+      <div class="card" id="card-activities"></div>
+    </div>
+    <div class="card" id="card-bottlenecks"></div>
+    <div class="grid2">
+      <div class="card" id="card-handoffs"></div>
+      <div class="card" id="card-transitions"></div>
+    </div>
+    <div class="grid2">
+      <div class="card" id="card-variants"></div>
+      <div class="card" id="card-provenance"></div>
+    </div>
+  </section>
+
+  <section class="panel hidden" id="tab-investigate">
+    <div class="panel-head">
+      <div>
+        <h2>Investigate a process question <span class="kind kind-ai">REAL LOCAL AI</span> <span class="muted small">or</span> <span class="kind kind-mock">DETERMINISTIC MOCK</span></h2>
+        <p class="muted">Runs the real LangGraph investigation (analyst → investigator → tools → optimizer → validator) on the server. Choose who produces the reasoning steps: the deterministic mock (<b>DETERMINISTIC_MOCK_NOT_REAL_AI</b>, default) or a real model running locally in Ollama (<b>REAL_MODEL_OUTPUT</b>). Tools, evidence, validator, guardrails and human approval are identical for both.</p>
+      </div>
+    </div>
+    <div class="card">
+      <h3>0. Choose the model</h3>
+      <div class="choices" id="model-choices" role="radiogroup" aria-label="Model mode"></div>
+      <div id="model-status" class="small muted"></div>
+      <h3>1. Choose a predefined investigation</h3>
+      <div class="choices" id="scenario-choices"></div>
+      <label class="field">Investigation goal <span class="muted small">(the real input guardrail screens this text; the deterministic mock ignores the wording, the real local model reads it as untrusted data)</span>
+        <textarea id="goal" rows="2" maxlength="2000"></textarea>
+      </label>
+      <h3>2. Choose how the recommendation is worded</h3>
+      <p class="muted small">Pick an unsafe variant to see the guardrails at work. The server applies the wording, then runs the same validator and guardrails it runs on submission.</p>
+      <label class="field">Wording
+        <select id="variant"></select>
+      </label>
+      <label class="field hidden" id="custom-wrap">Your problem statement
+        <textarea id="custom-text" rows="2" maxlength="2000" placeholder="e.g. Incidents with repeated group returns show longer observed case spans."></textarea>
+      </label>
+      <div class="actions"><button class="btn primary" id="run-investigation">Run investigation on server</button></div>
+    </div>
+    <div id="investigation-result"></div>
+  </section>
+
+  <section class="panel hidden" id="tab-whatif">
+    <div class="panel-head">
+      <div>
+        <h2>What-if: fewer repeated group handoffs <span class="kind kind-sim">HYPOTHETICAL WHAT-IF</span></h2>
+        <p class="muted">Runs the real deterministic simulation endpoint <code>POST /aggregate/v1/simulate-group-transition-reduction</code>. Its results are <b>hypothetical, non-causal scenarios</b>, never measured improvements.</p>
+      </div>
+    </div>
+    <div class="banner warn">SIMULATED SCENARIO · NOT A MEASURED IMPROVEMENT · NOT A PREDICTION</div>
+    <div class="grid2">
+      <div class="card">
+        <h3>1. Select handoff patterns <span class="muted small">(evidence-backed findings)</span></h3>
+        <div id="whatif-findings" class="scroll"></div>
+      </div>
+      <div class="card">
+        <h3>2. Set the assumptions</h3>
+        <p class="muted small">The share of repeated-visit events assumed eligible, multiplied by the assumed reduction among them. The server requires the combined effect to rise from conservative to optimistic.</p>
+        <table class="assump">
+          <thead><tr><th>Scenario</th><th>Eligible share</th><th>Reduction share</th></tr></thead>
+          <tbody id="assumptions"></tbody>
+        </table>
+        <div class="actions"><button class="btn primary" id="run-whatif">Run simulation on server</button></div>
+        <div class="note small">Not offered, because they are not implemented: elapsed-time savings, SLA impact, and any intervention other than reducing repeated group handoffs. The engine reports elapsed-time and SLA impact as NOT_ESTIMABLE.</div>
+      </div>
+    </div>
+    <div id="whatif-result"></div>
+  </section>
+
+  <section class="panel hidden" id="tab-approvals">
+    <div class="panel-head">
+      <div>
+        <h2>Human approval</h2>
+        <p class="muted">Requests load from the backend. Each decision goes to the real workflow API with the stored version hash and an idempotency key. The server revalidates the policy immediately before execution.</p>
+      </div>
+      <button class="btn" id="reload-approvals">Reload from server</button>
+    </div>
+    <div class="grid-side">
+      <div class="card"><h3>Requests</h3><div id="approval-list"></div></div>
+      <div id="approval-detail" class="card"><p class="muted">Select a request.</p></div>
+    </div>
+  </section>
+
+  <section class="panel hidden" id="tab-tickets">
+    <div class="panel-head">
+      <div>
+        <h2>Improvement tickets <span class="kind kind-ticket">LOCAL TICKET</span></h2>
+        <p class="muted">Tickets exist only in the disposable local database. The local ticket adapter creates one only after an approval passes revalidation.</p>
+      </div>
+      <button class="btn" id="reload-tickets">Reload from server</button>
+    </div>
+    <div id="tickets"></div>
+  </section>
+
+  <section class="panel hidden" id="tab-audit">
+    <div class="panel-head">
+      <div>
+        <h2>Audit trail</h2>
+        <p class="muted">Admin only. Audit rows hold codes and identifiers, never recommendation text.</p>
+      </div>
+      <div class="actions">
+        <button class="btn" id="deliver-notifications">Deliver queued notifications (local adapter)</button>
+        <button class="btn" id="reload-audit">Reload from server</button>
+      </div>
+    </div>
+    <div id="audit"></div>
+  </section>
+
+  <section class="panel hidden" id="tab-safety">
+    <div class="panel-head"><div><h2>Safety, isolation and known limitations</h2></div></div>
+    <div class="grid2">
+      <div class="card" id="safety-integrity"></div>
+      <div class="card" id="safety-isolation"></div>
+    </div>
+    <div class="card" id="safety-limits"></div>
+    <div class="card" id="safety-policy"></div>
+  </section>
+</main>
+
+<aside class="apilog" aria-label="Server calls">
+  <div class="apilog-head"><b>Server calls</b><span class="muted small">every result on screen comes from one of these responses</span></div>
+  <ol id="apilog"></ol>
+</aside>
+</body>
+</html>

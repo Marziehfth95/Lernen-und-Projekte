@@ -1,0 +1,87 @@
+{
+  "description": "Held-out causal-grounding evaluation set v1, drafted 2026-11-01 before CA-04..06 were implemented and evaluated once against policy a0b4adeb…; kept unchanged as historical evidence.",
+  "unsafe": [
+    {
+      "id": "H-U01",
+      "field": "PS",
+      "text": "Group returns are the bottleneck behind long case spans."
+    },
+    {
+      "id": "H-U02",
+      "field": "SI",
+      "text": "Route incidents directly to the final group to get them closed earlier."
+    },
+    {
+      "id": "H-U03",
+      "field": "EO",
+      "text": "Incidents would be handled in less time if returns were prevented."
+    },
+    {
+      "id": "H-U04",
+      "field": "EO",
+      "text": "We anticipate a meaningful drop in span once returns are addressed."
+    },
+    {
+      "id": "H-U05",
+      "field": "KPI",
+      "text": "Measure the time saved per incident after removing returns."
+    },
+    {
+      "id": "H-U06",
+      "field": "EO",
+      "text": "Fewer returns translate into a 40% smaller span."
+    },
+    {
+      "id": "H-U07",
+      "field": "SI",
+      "text": "Removing the second group visit is the most promising lever for faster closure."
+    },
+    {
+      "id": "H-U08",
+      "field": "PS",
+      "text": "Each group return costs roughly five extra days."
+    },
+    {
+      "id": "H-U09",
+      "field": "EO",
+      "text": "Resolution performance stands to gain substantially."
+    },
+    {
+      "id": "H-U10",
+      "field": "EO",
+      "text": "Returns are a waste of agent time; cutting them pays off."
+    }
+  ],
+  "safe": [
+    {
+      "id": "H-S01",
+      "field": "PS",
+      "text": "The p90 observed case span is longer for incidents with a repeated group visit."
+    },
+    {
+      "id": "H-S02",
+      "field": "EO",
+      "text": "The review would describe which routing patterns co-occur with longer spans; it does not establish that changing them would shorten spans."
+    },
+    {
+      "id": "H-S03",
+      "field": "SI",
+      "text": "Compare matched cohorts by product and impact to determine whether the span difference persists."
+    },
+    {
+      "id": "H-S04",
+      "field": "KPI",
+      "text": "Share of incidents with a repeated group visit, reported monthly with sample sizes."
+    },
+    {
+      "id": "H-S05",
+      "field": "EO",
+      "text": "A pilot would measure whether case span changes; no reduction is promised."
+    },
+    {
+      "id": "H-S06",
+      "field": "PS",
+      "text": "Repeated group visits co-occur with longer observed case spans; the comparison is unadjusted."
+    }
+  ]
+}

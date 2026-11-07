@@ -1,0 +1,1095 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AI Process Optimizer</title>
+<link rel="icon" href="data:," />
+<style>
+  /* Design tokens: light by default, dark via OS preference or data-theme. */
+  :root {
+    color-scheme: light;
+    --bg: #f4f5f7;
+    --surface: #ffffff;
+    --surface-2: #f7f8fa;
+    --border: #dde1e7;
+    --text: #14171c;
+    --text-2: #4a515c;
+    --text-3: #6b7280;
+    --focus: #2a78d6;
+    --accent: #2a78d6;
+    --btn: #2a78d6;
+    --series-1: #2a78d6;
+    --series-2: #eb6834;
+    --ref: #6b7280;
+    --mock-bg: #b43c0a;
+    --mock-text: #ffffff;
+    --ok-bg: #e6f4ea; --ok-text: #11632b;
+    --warn-bg: #fff4dc; --warn-text: #7a4b00; --warn-border: #e9b949;
+    --err-bg: #fdeaea; --err-text: #9b1c1c;
+    --info-bg: #e8f0fb; --info-text: #1c4f8f;
+    --analyst: #2a78d6; --analyst-bg: #e8f0fb;
+    --owner: #6250d6; --owner-bg: #efecfc;
+    --admin: #52514e; --admin-bg: #ededeb;
+    --skeleton: #e6e8ec;
+    --radius: 10px;
+    --shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --bg: #0f1114;
+      --surface: #1a1a19;
+      --surface-2: #222321;
+      --border: #33352f;
+      --text: #f0efec;
+      --text-2: #c3c2b7;
+      --text-3: #9a998f;
+      --focus: #6da7ec;
+      --accent: #6da7ec;
+      --btn: #256abf;
+      --series-1: #3987e5;
+      --series-2: #d95926;
+      --ref: #9a998f;
+      --mock-bg: #c2410c;
+      --ok-bg: #12301c; --ok-text: #8fd9a8;
+      --warn-bg: #33270b; --warn-text: #f3cf7a; --warn-border: #8a6a1c;
+      --err-bg: #3a1515; --err-text: #f4a4a4;
+      --info-bg: #15263d; --info-text: #9ec5f4;
+      --analyst: #6da7ec; --analyst-bg: #15263d;
+      --owner: #9085e9; --owner-bg: #241f45;
+      --admin: #c3c2b7; --admin-bg: #2a2a28;
+      --skeleton: #2a2b29;
+      --shadow: none;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #0f1114; --surface: #1a1a19; --surface-2: #222321; --border: #33352f;
+    --text: #f0efec; --text-2: #c3c2b7; --text-3: #9a998f; --focus: #6da7ec; --accent: #6da7ec; --btn: #256abf;
+    --series-1: #3987e5; --series-2: #d95926; --ref: #9a998f; --mock-bg: #c2410c;
+    --ok-bg: #12301c; --ok-text: #8fd9a8; --warn-bg: #33270b; --warn-text: #f3cf7a; --warn-border: #8a6a1c;
+    --err-bg: #3a1515; --err-text: #f4a4a4; --info-bg: #15263d; --info-text: #9ec5f4;
+    --analyst: #6da7ec; --analyst-bg: #15263d; --owner: #9085e9; --owner-bg: #241f45;
+    --admin: #c3c2b7; --admin-bg: #2a2a28; --skeleton: #2a2b29; --shadow: none;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 15px/1.5 -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+  :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; border-radius: 4px; }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  code, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.85em; }
+
+  /* Application bar: product identity plus the truthful environment status. */
+  .app-bar { position: sticky; top: 0; z-index: 10; background: var(--surface); border-bottom: 1px solid var(--border); box-shadow: var(--shadow); }
+  .app-bar-inner { max-width: 1180px; margin: 0 auto; padding: 10px 16px; display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: center; justify-content: space-between; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 650; font-size: 0.92rem; }
+  .brand-mark { display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 7px; background: var(--accent); color: #fff; font-size: 0.8rem; font-weight: 750; }
+  .env-status { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 0.8rem; color: var(--text-2); }
+
+  /* End-to-end workflow: each stage links to its section. */
+  .pipeline { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; list-style: none; padding: 0; margin: 18px 0 20px; counter-reset: stage; }
+  .pipeline li { counter-increment: stage; }
+  .pipeline a { display: block; height: 100%; text-decoration: none; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-top: 3px solid var(--accent); border-radius: 8px; padding: 10px 12px; }
+  .pipeline a:hover { background: var(--surface-2); }
+  .pipeline a:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  .pipeline .stage { display: block; font-size: 0.7rem; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.05em; }
+  .pipeline .stage::before { content: counter(stage, decimal-leading-zero) " · "; }
+  .pipeline strong { display: block; font-size: 0.88rem; margin: 2px 0; }
+  .pipeline .desc { display: block; font-size: 0.76rem; color: var(--text-2); }
+
+  main { max-width: 1180px; margin: 0 auto; padding: 24px 16px 64px; }
+  .page-head { display: flex; flex-wrap: wrap; gap: 12px 24px; justify-content: space-between; align-items: flex-end; margin-bottom: 20px; }
+  h1 { font-size: 1.6rem; margin: 0 0 6px; letter-spacing: -0.015em; }
+  .subtitle { color: var(--accent); font-weight: 600; font-size: 0.92rem; margin: 0 0 8px; }
+  h2 { font-size: 1.1rem; margin: 0; }
+  h3 { font-size: 0.95rem; margin: 0 0 8px; }
+  p { margin: 0 0 8px; }
+  .lede { color: var(--text-2); max-width: 70ch; margin: 0; }
+  .muted { color: var(--text-3); font-size: 0.85rem; }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 20px; margin-bottom: 20px; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .card-head .title { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .step-no { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--surface-2); border: 1px solid var(--border); font-size: 0.8rem; font-weight: 700; }
+
+  .grid { display: grid; gap: 16px; }
+  .grid.kpis { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+  .grid.two { grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+
+  .kpi { background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; min-height: 92px; }
+  .kpi .label { color: var(--text-2); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; }
+  .kpi .value { font-size: 1.5rem; font-weight: 650; font-variant-numeric: tabular-nums; margin: 2px 0; }
+  .kpi .sub { color: var(--text-3); font-size: 0.78rem; }
+
+  .panel { background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 14px; min-width: 0; }
+  .chart svg { width: 100%; height: auto; display: block; }
+  .chart text { fill: var(--text-2); font-size: 11px; font-family: inherit; }
+  .chart .val { fill: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .chart .axis { stroke: var(--border); }
+  .chart .ref { stroke: var(--ref); stroke-dasharray: 4 3; stroke-width: 1.5; }
+  .chart .bar { fill: var(--series-1); }
+  .chart .bar.s2 { fill: var(--series-2); }
+  .chart .bar:hover { opacity: 0.8; }
+  .legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 0.8rem; color: var(--text-2); margin: 4px 0 8px; }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
+  .legend .ref-key { width: 14px; height: 0; border-top: 2px dashed var(--ref); border-radius: 0; vertical-align: 3px; }
+
+  button {
+    font: inherit; font-size: 0.9rem; font-weight: 600; cursor: pointer; border-radius: 7px; padding: 8px 14px;
+    border: 1px solid var(--border); background: var(--surface); color: var(--text);
+  }
+  button:hover:not(:disabled) { background: var(--surface-2); }
+  button.primary { background: var(--btn); border-color: var(--btn); color: #fff; }
+  button.primary:hover:not(:disabled) { filter: brightness(1.08); background: var(--btn); }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  button[aria-busy="true"]::after { content: ""; display: inline-block; width: 12px; height: 12px; margin-left: 8px; vertical-align: -1px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+
+  .badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 9px; border-radius: 999px; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.03em; white-space: nowrap; border: 1px solid transparent; }
+  .badge.mock { background: var(--mock-bg); color: var(--mock-text); }
+  .badge.ok { background: var(--ok-bg); color: var(--ok-text); }
+  .badge.warn { background: var(--warn-bg); color: var(--warn-text); border-color: var(--warn-border); }
+  .badge.err { background: var(--err-bg); color: var(--err-text); }
+  .badge.info { background: var(--info-bg); color: var(--info-text); }
+  .badge.neutral { background: var(--surface-2); color: var(--text-2); border-color: var(--border); }
+
+  /* Role identity: color + icon + text label, never color alone. */
+  .role { display: inline-flex; align-items: center; gap: 5px; font-weight: 650; font-size: 0.8rem; padding: 2px 9px; border-radius: 999px; border: 1px solid; white-space: nowrap; }
+  .role::before { font-size: 0.8em; }
+  .role.analyst { color: var(--analyst); background: var(--analyst-bg); border-color: var(--analyst); }
+  .role.analyst::before { content: "◆"; }
+  .role.owner { color: var(--owner); background: var(--owner-bg); border-color: var(--owner); }
+  .role.owner::before { content: "●"; }
+  .role.admin { color: var(--admin); background: var(--admin-bg); border-color: var(--admin); }
+  .role.admin::before { content: "■"; }
+  .role.unknown { color: var(--text-2); background: var(--surface-2); border-color: var(--border); }
+
+  .role-switch { display: flex; flex-wrap: wrap; gap: 8px; border: 0; padding: 0; margin: 0; }
+  .role-switch legend { font-size: 0.8rem; color: var(--text-2); margin-bottom: 6px; padding: 0; }
+  .role-switch label { display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 7px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); font-size: 0.88rem; }
+  .role-switch input { accent-color: var(--accent); margin: 0; }
+  .role-switch label:has(input:checked) { border-width: 2px; padding: 6px 11px; }
+  .role-switch label.analyst:has(input:checked) { border-color: var(--analyst); background: var(--analyst-bg); }
+  .role-switch label.owner:has(input:checked) { border-color: var(--owner); background: var(--owner-bg); }
+  .role-switch label.admin:has(input:checked) { border-color: var(--admin); background: var(--admin-bg); }
+  .role-switch .perm { display: block; font-size: 0.72rem; color: var(--text-3); }
+
+  .lane { border: 1px solid var(--border); border-left-width: 5px; border-radius: 8px; padding: 14px; background: var(--surface-2); min-width: 0; }
+  .lane.analyst { border-left-color: var(--analyst); }
+  .lane.owner { border-left-color: var(--owner); }
+  .lane-head { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .mismatch { margin-top: 8px; }
+
+  .stepper { display: flex; flex-wrap: wrap; gap: 0; list-style: none; padding: 0; margin: 0 0 16px; }
+  .stepper li { flex: 1 1 120px; position: relative; padding: 8px 10px 8px 30px; font-size: 0.8rem; color: var(--text-3); border-top: 3px solid var(--border); }
+  .stepper li::before { content: "○"; position: absolute; left: 10px; top: 7px; }
+  .stepper li.done { color: var(--text); border-top-color: var(--ok-text); }
+  .stepper li.done::before { content: "✓"; color: var(--ok-text); font-weight: 700; }
+  .stepper li.current { color: var(--text); font-weight: 650; border-top-color: var(--accent); }
+  .stepper li.current::before { content: "●"; color: var(--accent); }
+  .stepper li.stopped { color: var(--err-text); font-weight: 650; border-top-color: var(--err-text); }
+  .stepper li.stopped::before { content: "✕"; }
+
+  .callout { border-radius: 8px; padding: 12px 14px; margin: 0 0 14px; font-size: 0.88rem; border: 1px solid; }
+  .callout.warn { background: var(--warn-bg); color: var(--warn-text); border-color: var(--warn-border); }
+  .callout.err { background: var(--err-bg); color: var(--err-text); border-color: transparent; }
+  .callout.info { background: var(--info-bg); color: var(--info-text); border-color: transparent; }
+  .callout strong { display: block; margin-bottom: 2px; }
+  .callout ul { margin: 6px 0 0; padding-left: 18px; }
+
+  .rec-grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+  .rec-sec { border: 1px solid var(--border); border-top: 4px solid; border-radius: 8px; padding: 14px; background: var(--surface-2); min-width: 0; }
+  .rec-sec.observed { border-top-color: var(--ok-text); grid-column: 1 / -1; }
+  .rec-sec.hypo { border-top-color: var(--warn-border); }
+  .rec-sec.limits { border-top-color: var(--err-text); }
+  .rec-sec.action { border-top-color: var(--accent); }
+  .rec-sec h3 { display: flex; align-items: center; gap: 8px; }
+  .rec-sec ul { margin: 0; padding-left: 18px; }
+  .rec-sec li { margin-bottom: 6px; }
+  dl.kv { display: grid; grid-template-columns: max-content 1fr; gap: 4px 12px; margin: 0; font-size: 0.86rem; }
+  dl.kv dt { color: var(--text-2); }
+  dl.kv dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+  dl.stack dt { color: var(--text-2); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; margin-top: 10px; }
+  dl.stack dt:first-child { margin-top: 0; }
+  dl.stack dd { margin: 2px 0 0; }
+
+  .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 8px; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  caption { text-align: left; padding: 8px 10px; color: var(--text-2); font-size: 0.8rem; }
+  th, td { padding: 8px 10px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--border); }
+  th { background: var(--surface-2); color: var(--text-2); font-weight: 600; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.03em; }
+  tr:last-child td { border-bottom: 0; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  tr.headline td { background: var(--info-bg); }
+
+  .timeline { list-style: none; margin: 0; padding: 0 0 0 4px; }
+  .timeline li { position: relative; padding: 0 0 16px 22px; border-left: 2px solid var(--border); }
+  .timeline li:last-child { border-left-color: transparent; }
+  .timeline li::before { content: ""; position: absolute; left: -7px; top: 3px; width: 12px; height: 12px; border-radius: 50%; background: var(--surface); border: 2px solid var(--accent); }
+  .timeline li.failure::before { border-color: var(--err-text); }
+  .timeline .row1 { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
+  .timeline .meta { color: var(--text-3); font-size: 0.78rem; margin-top: 2px; overflow-wrap: anywhere; }
+
+  details { margin-top: 12px; }
+  details summary { cursor: pointer; color: var(--text-2); font-size: 0.85rem; }
+  pre { background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 10px; overflow: auto; font-size: 0.78rem; max-height: 320px; }
+
+  .placeholder { color: var(--text-3); font-size: 0.88rem; padding: 14px; border: 1px dashed var(--border); border-radius: 8px; text-align: center; }
+  .skeleton { background: var(--skeleton); border-radius: 6px; min-height: 92px; animation: pulse 1.4s ease-in-out infinite; }
+  @keyframes pulse { 50% { opacity: 0.5; } }
+  @media (prefers-reduced-motion: reduce) {
+    .skeleton, button[aria-busy="true"]::after { animation: none; }
+  }
+  input[type="text"] { font: inherit; font-size: 0.88rem; width: 100%; padding: 7px 10px; border-radius: 7px; border: 1px solid var(--border); background: var(--surface); color: var(--text); }
+  .field { margin: 10px 0; }
+  .field label { display: block; font-size: 0.8rem; color: var(--text-2); margin-bottom: 4px; }
+  .section-label { margin: 22px 0 10px; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-2); }
+
+  @media (max-width: 640px) {
+    main { padding: 16px 16px 48px; }
+    .card { padding: 16px; }
+    .kpi .value { font-size: 1.3rem; }
+    dl.kv { grid-template-columns: 1fr; }
+    dl.kv dt { margin-top: 6px; }
+  }
+</style>
+</head>
+<body>
+<header class="app-bar">
+  <div class="app-bar-inner">
+    <div class="brand"><span class="brand-mark" aria-hidden="true">PO</span>IT Service Process Optimizer</div>
+    <div class="env-status" id="env-status" role="status" aria-label="Execution status"><span>Checking execution status…</span></div>
+  </div>
+</header>
+
+<main>
+  <div class="page-head">
+    <div>
+      <h1>AI-Powered IT Service Process Optimizer</h1>
+      <p class="subtitle">Process Mining · Multi-Agent AI · Evidence-Based Recommendations · Human-in-the-Loop</p>
+      <p class="lede">Every number on this page is returned by the governed aggregate API or the agent investigation and is validated against the Evidence Contract. Approval and rejection use the authenticated workflow API; role checks and self-approval protection are enforced server-side.</p>
+    </div>
+  </div>
+  <nav aria-label="Workflow">
+    <ol class="pipeline">
+      <li><a href="#kpi-heading"><span class="stage">Analyze</span><strong>Process mining</strong><span class="desc">KPIs, cohorts, bottlenecks</span></a></li>
+      <li><a href="#rec-heading"><span class="stage">Investigate</span><strong>Agent investigation</strong><span class="desc">Tool calls over verified findings</span></a></li>
+      <li><a href="#rec-heading"><span class="stage">Validate</span><strong>Evidence validation</strong><span class="desc">Every numeric claim checked</span></a></li>
+      <li><a href="#wf-heading"><span class="stage">Decide</span><strong>Human approval</strong><span class="desc">Role-based, no self-approval</span></a></li>
+      <li><a href="#tickets-heading"><span class="stage">Execute</span><strong>Ticket execution</strong><span class="desc">Only after approval</span></a></li>
+      <li><a href="#audit-heading"><span class="stage">Govern</span><strong>Audit trail</strong><span class="desc">Every action recorded</span></a></li>
+    </ol>
+  </nav>
+
+  <!-- Role selection -->
+  <section class="card" aria-labelledby="role-heading">
+    <div class="card-head">
+      <div class="title"><h2 id="role-heading">Acting identity</h2><span class="badge neutral">LOCAL DEV TOKEN</span></div>
+      <span class="muted" id="role-current" aria-live="polite"></span>
+    </div>
+    <fieldset class="role-switch" id="role-switch">
+      <legend>Choose the role whose local development token is sent with each request</legend>
+      <label class="analyst"><input type="radio" name="role" value="analyst" checked />
+        <span><span class="role analyst">Analyst</span><span class="perm">Submit · Aggregate.Read · Simulation</span></span></label>
+      <label class="owner"><input type="radio" name="role" value="owner" />
+        <span><span class="role owner">Process Owner</span><span class="perm">Approve / reject · Aggregate.Read</span></span></label>
+      <label class="admin"><input type="radio" name="role" value="admin" />
+        <span><span class="role admin">Admin</span><span class="perm">Audit history only</span></span></label>
+    </fieldset>
+    <p class="muted" style="margin-top:10px">The token goes only in the <code>Authorization</code> header. It is never placed in a URL, logged to the console, or stored in the browser.</p>
+  </section>
+
+  <!-- 1 KPIs -->
+  <section class="card" aria-labelledby="kpi-heading" aria-busy="false" id="kpi-card">
+    <div class="card-head">
+      <div class="title"><span class="step-no" aria-hidden="true">1</span><h2 id="kpi-heading">Process analysis &amp; KPIs</h2><span class="badge ok">VERIFIED AGGREGATES</span></div>
+      <button id="refresh-kpis" type="button">Refresh</button>
+    </div>
+    <div id="kpi-status" aria-live="polite"></div>
+    <div class="grid kpis" id="kpi-overview"></div>
+    <p class="muted" id="kpi-provenance" style="margin-top:10px"></p>
+
+    <div class="section-label">Group returns <span class="badge warn">OBSERVATIONAL · NOT CAUSAL</span></div>
+    <div class="grid kpis" id="kpi-returns"></div>
+
+    <div class="grid two" style="margin-top:16px">
+      <div class="panel chart" id="chart-cohort"></div>
+      <div class="panel chart" id="chart-transitions"></div>
+    </div>
+    <div class="grid two" style="margin-top:16px">
+      <div class="panel chart" id="chart-handoffs"></div>
+      <div class="panel" id="cohort-limitations"></div>
+    </div>
+  </section>
+
+  <!-- 2 Recommendation -->
+  <section class="card" aria-labelledby="rec-heading">
+    <div class="card-head">
+      <div class="title"><span class="step-no" aria-hidden="true">2</span><h2 id="rec-heading">Agent investigation &amp; validated recommendation</h2><span class="badge neutral" id="rec-label">DETERMINISTIC MOCK PROVIDER</span></div>
+      <button id="run-investigation" class="primary" type="button">Run investigation</button>
+    </div>
+    <p class="muted">Scenario <code>group_returns</code>. The agent selects verified findings through governed tools and drafts a recommendation; every numeric claim is checked against an exact Evidence Contract field path.</p>
+    <div id="rec-output" aria-live="polite"><div class="placeholder">Not run yet.</div></div>
+  </section>
+
+  <!-- 3 Simulation -->
+  <section class="card" aria-labelledby="sim-heading">
+    <div class="card-head">
+      <div class="title"><span class="step-no" aria-hidden="true">3</span><h2 id="sim-heading">What-if simulation</h2><span class="badge warn">HYPOTHETICAL · NOT OBSERVED</span></div>
+      <button id="run-simulation" type="button">Run what-if simulation</button>
+    </div>
+    <div class="callout warn" role="note">
+      <strong>Assumption-driven arithmetic, not a forecast.</strong>
+      Scenario shares below are inputs chosen by a person, not effects measured in the data. Results must not be read as causal impact, time savings or SLA improvement.
+    </div>
+    <div id="sim-output" aria-live="polite"><div class="placeholder">Not run yet. Requires the Analyst role (Simulation.Execute).</div></div>
+  </section>
+
+  <!-- 4 Approval workflow -->
+  <section class="card" aria-labelledby="wf-heading">
+    <div class="card-head">
+      <div class="title"><span class="step-no" aria-hidden="true">4</span><h2 id="wf-heading">Human approval &amp; ticket execution</h2></div>
+    </div>
+    <ol class="stepper" id="wf-stepper" aria-label="Approval state"></ol>
+    <div class="panel" style="margin-bottom:16px">
+      <div class="lane-head"><h3>Existing approval requests</h3>
+        <button id="load-pending" type="button">Load pending requests</button></div>
+      <p class="muted">Requests already stored in the workflow database, including recommendations submitted by earlier agent runs. Select one to decide on it; an immutable version is never submitted twice.</p>
+      <div id="pending-output" aria-live="polite"></div>
+    </div>
+    <div class="grid two">
+      <div class="lane analyst">
+        <div class="lane-head"><h3>Submit for approval</h3><span class="role analyst">Analyst</span></div>
+        <p class="muted">Submits the recommendation from step 2 with its tool-call records. Creates an immutable recommendation version.</p>
+        <div class="actions"><button id="submit-recommendation" class="primary" type="button" disabled>Submit recommendation</button></div>
+        <div class="mismatch" id="submit-mismatch"></div>
+        <div id="submit-output" aria-live="polite"></div>
+      </div>
+      <div class="lane owner">
+        <div class="lane-head"><h3>Decide</h3><span class="role owner">Process Owner</span></div>
+        <p class="muted">Must be a different actor from the submitter. The route requires the Process Owner role and the service layer separately blocks self-approval (<code>SELF_APPROVAL_PROHIBITED</code>).</p>
+        <div class="field">
+          <label for="decision-reason">Decision reason (stored in the audit trail)</label>
+          <input type="text" id="decision-reason" maxlength="500" value="Decision recorded via the process optimizer dashboard." />
+        </div>
+        <div class="actions">
+          <button id="approve-recommendation" class="primary" type="button" disabled>Approve</button>
+          <button id="reject-recommendation" type="button" disabled>Reject</button>
+        </div>
+        <div class="mismatch" id="decide-mismatch"></div>
+        <div id="decision-output" aria-live="polite"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5 Tickets -->
+  <section class="card" aria-labelledby="tickets-heading">
+    <div class="card-head">
+      <div class="title"><span class="step-no" aria-hidden="true">5</span><h2 id="tickets-heading">Improvement tickets</h2><span class="muted">Analyst or Process Owner</span></div>
+      <button id="load-tickets" type="button">Load tickets</button>
+    </div>
+    <div id="tickets-output" aria-live="polite"><div class="placeholder">Not loaded. Tickets are created only after an approval executes.</div></div>
+  </section>
+
+  <!-- 6 Audit -->
+  <section class="card" aria-labelledby="audit-heading">
+    <div class="card-head">
+      <div class="title"><span class="step-no" aria-hidden="true">6</span><h2 id="audit-heading">Audit trail</h2><span class="role admin">Admin</span></div>
+      <button id="load-audit" type="button">Load audit events</button>
+    </div>
+    <div id="audit-output" aria-live="polite"><div class="placeholder">Not loaded. Requires the Admin role (Workflow.Audit).</div></div>
+  </section>
+</main>
+
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+
+// Local development identities configured by `process-optimizer-demo --serve`.
+// Tokens are only ever sent in the Authorization header.
+const ROLES = {
+  analyst: { label: "Analyst", actor: "demo.analyst", token: "demo-analyst-token" },
+  owner: { label: "Process Owner", actor: "demo.process_owner", token: "demo-owner-token" },
+  admin: { label: "Admin", actor: "demo.admin", token: "demo-admin-token" },
+};
+const ROLE_BY_ACTOR = Object.fromEntries(Object.entries(ROLES).map(([key, r]) => [r.actor, key]));
+
+const ERROR_HINTS = {
+  AUTHENTICATION_REQUIRED: "No valid bearer token was accepted.",
+  INSUFFICIENT_ROLE: "The current role is not allowed to call this route. Authorization is enforced by the backend.",
+  INSUFFICIENT_PERMISSION: "The current role lacks the permission this endpoint requires.",
+  SELF_APPROVAL_PROHIBITED: "The submitter cannot approve their own recommendation.",
+  WORKFLOW_CONFLICT: "This immutable recommendation version already exists. Select its existing request under \"Existing approval requests\" instead of submitting it again.",
+  INVALID_STATE_TRANSITION: "The approval is already in a terminal state.",
+  AGGREGATE_PACKAGE_NOT_READY: "The governed aggregate package is missing or failed verification.",
+  AGGREGATE_OPERATION_UNAVAILABLE: "The aggregate package failed integrity verification.",
+  WORKFLOW_NOT_CONFIGURED: "The workflow database is not configured.",
+  NETWORK_ERROR: "The server could not be reached.",
+};
+
+let lastInvestigation = null;
+let currentApproval = null;
+
+function roleKey() { return document.querySelector('input[name="role"]:checked').value; }
+
+// ---------- DOM helpers (all API text is set via textContent, never parsed as HTML) ----------
+function h(tag, attrs, ...children) {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (v === null || v === undefined || v === false) continue;
+    if (k === "class") el.className = v;
+    else if (k === "text") el.textContent = v;
+    else el.setAttribute(k, v);
+  }
+  for (const c of children.flat()) {
+    if (c === null || c === undefined || c === false) continue;
+    el.append(c instanceof Node ? c : document.createTextNode(String(c)));
+  }
+  return el;
+}
+const SVG_NS = "http://www.w3.org/2000/svg";
+function s(tag, attrs, ...children) {
+  const el = document.createElementNS(SVG_NS, tag);
+  for (const [k, v] of Object.entries(attrs || {})) el.setAttribute(k, v);
+  for (const c of children) el.append(c instanceof Node ? c : document.createTextNode(String(c)));
+  return el;
+}
+function render(target, ...nodes) { $(target).replaceChildren(...nodes.filter((n) => n !== null && n !== undefined)); }
+function badge(text, kind) { return h("span", { class: "badge " + kind, text }); }
+function roleChip(key, fallback) {
+  return key ? h("span", { class: "role " + key, text: ROLES[key].label }) : h("span", { class: "role unknown", text: fallback || "unknown" });
+}
+function actorChip(actorId) {
+  const key = ROLE_BY_ACTOR[actorId];
+  const chip = roleChip(key, actorId);
+  return h("span", {}, chip, " ", h("code", { text: actorId }));
+}
+function kv(pairs, cls) {
+  return h("dl", { class: cls || "kv" }, pairs.filter(Boolean).flatMap(([k, v]) => [h("dt", { text: k }), h("dd", {}, v)]));
+}
+function list(items) { return h("ul", {}, items.map((t) => h("li", {}, t))); }
+function rawJson(value, label) {
+  return h("details", {}, h("summary", { text: label || "Raw API response" }), h("pre", { text: JSON.stringify(value, null, 2) }));
+}
+function short(id) { return id && id.length > 22 ? id.slice(0, 22) + "…" : id; }
+function idCode(id) { return h("code", { title: id, text: short(id) }); }
+
+// ---------- Formatting (presentation only; never alters values) ----------
+const nf = new Intl.NumberFormat("en-US");
+const fmtInt = (n) => (n === null || n === undefined ? "—" : nf.format(n));
+const fmtNum = (n, d = 2) => (n === null || n === undefined ? "—" : Number(n).toLocaleString("en-US", { maximumFractionDigits: d }));
+const fmtPct = (x, d = 1) => (x === null || x === undefined ? "—" : (x * 100).toFixed(d) + "%");
+function fmtDuration(seconds) {
+  if (seconds === null || seconds === undefined) return "—";
+  const v = Number(seconds);
+  if (v < 120) return fmtNum(v, 0) + " s";
+  if (v < 7200) return fmtNum(v / 60, 1) + " min";
+  if (v < 172800) return fmtNum(v / 3600, 1) + " h";
+  return fmtNum(v / 86400, 1) + " d";
+}
+function fmtDate(iso) {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  return isNaN(d) ? iso : d.toISOString().slice(0, 10);
+}
+function fmtTime(iso) {
+  const d = new Date(iso);
+  return isNaN(d) ? iso : d.toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "medium" });
+}
+function fmtFact(value, unit) {
+  if (unit === "seconds") return h("span", {}, fmtDuration(value), " ", h("span", { class: "muted", text: "(" + fmtNum(value, 1) + " s)" }));
+  return fmtNum(value) + (unit ? " " + unit : "");
+}
+
+// ---------- API ----------
+async function callApi(path, options = {}) {
+  let response;
+  try {
+    response = await fetch(path, {
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + ROLES[roleKey()].token,
+        ...(options.headers || {}),
+      },
+    });
+  } catch {
+    return { ok: false, status: 0, body: { detail: { code: "NETWORK_ERROR" } } };
+  }
+  const text = await response.text();
+  let body;
+  try { body = JSON.parse(text); } catch { body = text; }
+  return { ok: response.ok, status: response.status, body };
+}
+
+function errorCode(result) {
+  const detail = result.body && result.body.detail;
+  if (detail && typeof detail === "object" && !Array.isArray(detail) && detail.code) return detail.code;
+  if (Array.isArray(detail)) return "REQUEST_VALIDATION_FAILED";
+  return null;
+}
+function errorBox(result, context) {
+  const code = errorCode(result);
+  const status = result.status ? "HTTP " + result.status : "No response";
+  const box = h("div", { class: "callout err", role: "alert" },
+    h("strong", { text: (context ? context + ": " : "") + status + (code ? " · " + code : "") }),
+    ERROR_HINTS[code] || "The request did not succeed.",
+    " ", h("span", { class: "muted", text: "(acting as " + ROLES[roleKey()].label + ")" }));
+  if (Array.isArray(result.body && result.body.detail)) box.append(rawJson(result.body, "Validation details"));
+  return box;
+}
+
+async function withBusy(button, fn) {
+  button.disabled = true;
+  button.setAttribute("aria-busy", "true");
+  try { return await fn(); } finally {
+    button.removeAttribute("aria-busy");
+    button.disabled = false;
+  }
+}
+function loading(target, text) {
+  render(target, h("div", { class: "placeholder", role: "status", text: text || "Loading…" }));
+}
+
+// ---------- Execution status ----------
+// Compact environment chip; any flag the backend reports as true is surfaced as a warning.
+async function loadStatus() {
+  const result = await callApi("/demo/status");
+  if (!result.ok || typeof result.body !== "object") {
+    render("env-status", badge("Status unavailable", "warn"));
+    return;
+  }
+  const b = result.body;
+  const warnings = [
+    [b.azure_resources_used, "Azure resources in use"],
+    [b.paid_model_calls_made, "Paid model calls made"],
+    [b.external_notifications_sent, "External notifications sent"],
+  ].filter(([value]) => value !== false).map(([, text]) => badge("⚠ " + text, "warn"));
+  render("env-status", badge("Local environment", "neutral"), badge("Server-side RBAC", "info"), ...warnings);
+}
+
+// ---------- Charts (inline SVG, values straight from the API) ----------
+function hbarChart({ title, subtitle, rows, valueFormat, refValue, refLabel, note }) {
+  const W = 520, labelW = 150, valueW = 70, rowH = 26, top = 8;
+  const plotW = W - labelW - valueW;
+  const max = Math.max(refValue || 0, ...rows.map((r) => r.value)) || 1;
+  const H = top + rows.length * rowH + 22;
+  const svg = s("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": title });
+  rows.forEach((r, i) => {
+    const y = top + i * rowH;
+    const w = Math.max(2, (r.value / max) * plotW);
+    const label = r.label.length > 22 ? r.label.slice(0, 21) + "…" : r.label;
+    svg.append(s("text", { x: labelW - 8, y: y + 15, "text-anchor": "end" }, label));
+    const bar = s("rect", { class: "bar", x: labelW, y: y + 4, width: w, height: rowH - 10, rx: 3 });
+    bar.append(s("title", {}, r.tooltip || `${r.label}: ${valueFormat(r.value)}`));
+    svg.append(bar);
+    svg.append(s("text", { class: "val", x: labelW + w + 6, y: y + 15 }, valueFormat(r.value)));
+  });
+  svg.append(s("line", { class: "axis", x1: labelW, x2: labelW, y1: top, y2: top + rows.length * rowH }));
+  if (refValue) {
+    const x = labelW + (refValue / max) * plotW;
+    svg.append(s("line", { class: "ref", x1: x, x2: x, y1: top - 4, y2: top + rows.length * rowH }));
+  }
+  const legend = refValue
+    ? h("div", { class: "legend" }, h("span", {}, h("i", { style: "background:var(--series-1)" }), subtitle),
+        h("span", {}, h("i", { class: "ref-key" }), refLabel + " (" + valueFormat(refValue) + ")"))
+    : h("div", { class: "legend", text: subtitle });
+  const table = h("details", {}, h("summary", { text: "Table view" }), h("div", { class: "table-wrap" },
+    h("table", {}, h("thead", {}, h("tr", {}, h("th", { text: "Item" }), h("th", { class: "num", text: "Value" }))),
+      h("tbody", {}, rows.map((r) => h("tr", {}, h("td", { text: r.label }), h("td", { class: "num", text: r.tooltip || valueFormat(r.value) })))))));
+  return [h("h3", { text: title }), legend, svg, note ? h("p", { class: "muted", text: note }) : null, table];
+}
+
+function cohortChart(item) {
+  const metrics = [["median", "Median"], ["p75", "P75"], ["p90", "P90"]];
+  const cohorts = item.cohorts;
+  const W = 520, H = 230, left = 44, bottom = 34, top = 18;
+  const plotW = W - left - 10, plotH = H - top - bottom;
+  const max = Math.max(...cohorts.flatMap((c) => metrics.map(([k]) => c.distribution[k] || 0))) || 1;
+  const days = (v) => v / 86400;
+  const svg = s("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "Observed case span by group-return cohort" });
+  const ticks = 4, maxDays = days(max);
+  for (let t = 0; t <= ticks; t++) {
+    const val = (maxDays * t) / ticks;
+    const y = top + plotH - (val / maxDays) * plotH;
+    svg.append(s("line", { class: "axis", x1: left, x2: W - 10, y1: y, y2: y, "stroke-opacity": t === 0 ? 1 : 0.5 }));
+    svg.append(s("text", { x: left - 6, y: y + 4, "text-anchor": "end" }, fmtNum(val, 0) + "d"));
+  }
+  const groupW = plotW / metrics.length, barW = Math.min(46, groupW / 3);
+  metrics.forEach(([key, label], gi) => {
+    const cx = left + groupW * gi + groupW / 2;
+    cohorts.forEach((c, ci) => {
+      const v = c.distribution[key];
+      const bh = (v / max) * plotH;
+      const x = cx - barW - 1 + ci * (barW + 2);
+      const bar = s("rect", { class: "bar" + (ci === 1 ? " s2" : ""), x, y: top + plotH - bh, width: barW, height: bh, rx: 3 });
+      bar.append(s("title", {}, `${c.cohort} · ${label}: ${fmtDuration(v)} (${fmtNum(v, 1)} s, n=${fmtInt(c.distribution.observation_count)})`));
+      svg.append(bar);
+      svg.append(s("text", { class: "val", x: x + barW / 2, y: top + plotH - bh - 4, "text-anchor": "middle" }, fmtNum(days(v), 1)));
+    });
+    svg.append(s("text", { x: cx, y: H - 12, "text-anchor": "middle" }, label));
+  });
+  const legend = h("div", { class: "legend" }, cohorts.map((c, ci) =>
+    h("span", {}, h("i", { style: `background:var(--series-${ci + 1})` }), c.cohort.replaceAll("_", " ") + " (n=" + fmtInt(c.incident_count) + ")")));
+  const table = h("details", {}, h("summary", { text: "Table view" }), h("div", { class: "table-wrap" },
+    h("table", {}, h("thead", {}, h("tr", {}, h("th", { text: "Cohort" }), h("th", { class: "num", text: "Incidents" }),
+      ...metrics.map(([, l]) => h("th", { class: "num", text: l + " (s)" })))),
+      h("tbody", {}, cohorts.map((c) => h("tr", {}, h("td", { text: c.cohort }), h("td", { class: "num", text: fmtInt(c.incident_count) }),
+        ...metrics.map(([k]) => h("td", { class: "num", text: fmtNum(c.distribution[k], 1) }))))))));
+  return [h("h3", { text: "Observed case span by group-return cohort (days)" }), legend, svg,
+    h("p", { class: "muted", text: item.cohort_definition }), table];
+}
+
+// ---------- 1. KPIs ----------
+function kpi(label, value, sub, title) {
+  return h("div", { class: "kpi", title: title || null }, h("div", { class: "label", text: label }), h("div", { class: "value", text: value }), sub ? h("div", { class: "sub", text: sub }) : null);
+}
+function skeletons(target, n) { render(target, ...Array.from({ length: n }, () => h("div", { class: "skeleton", "aria-hidden": "true" }))); }
+
+async function loadKpis() {
+  const button = $("refresh-kpis");
+  $("kpi-card").setAttribute("aria-busy", "true");
+  render("kpi-status", h("p", { class: "sr-only", role: "status", text: "Loading process KPIs" }));
+  skeletons("kpi-overview", 6); skeletons("kpi-returns", 4);
+  ["chart-cohort", "chart-transitions", "chart-handoffs", "cohort-limitations"].forEach((id) => render(id, h("div", { class: "skeleton", "aria-hidden": "true" })));
+
+  const [overview, cohort, findings] = await withBusy(button, () => Promise.all([
+    callApi("/aggregate/v1/process-overview"),
+    callApi("/aggregate/v1/cohort-comparison", { method: "POST", body: JSON.stringify({ metric: "observed_case_span_seconds" }) }),
+    callApi("/aggregate/v1/bottleneck-findings", { method: "POST", body: JSON.stringify({ limit: 100 }) }),
+  ]));
+  $("kpi-card").setAttribute("aria-busy", "false");
+
+  const failed = [overview, cohort, findings].find((r) => !r.ok);
+  if (failed) {
+    render("kpi-status", errorBox(failed, "Could not load KPIs"));
+    ["kpi-overview", "kpi-returns", "chart-cohort", "chart-transitions", "chart-handoffs", "cohort-limitations"].forEach((id) => render(id));
+    render("kpi-provenance");
+    return;
+  }
+  render("kpi-status");
+
+  const o = overview.body.result.items[0];
+  const span = o.observed_case_span_seconds;
+  render("kpi-overview",
+    kpi("Incidents (cases)", fmtInt(o.case_count), fmtInt(o.single_event_case_count) + " single-event case(s)"),
+    kpi("Events", fmtInt(o.event_count), fmtNum(o.events_per_case.mean, 1) + " mean per case"),
+    kpi("Events per case", fmtNum(o.events_per_case.median, 1), "median · p90 " + fmtNum(o.events_per_case.p90, 1)),
+    kpi("Observed case span", fmtDuration(span.median), "median · p90 " + fmtDuration(span.p90), o.definitions.observed_case_span),
+    kpi("Observed period", fmtDate(o.observed_time_range.start_utc), "to " + fmtDate(o.observed_time_range.end_utc)),
+    kpi("Activities", fmtInt(o.activity_frequencies.length), o.activity_frequencies.map((a) => a.activity).join(", ")));
+  render("kpi-provenance",
+    "Analysis run ", h("code", { text: overview.body.analysis_run_id }), " · Evidence Contract v",
+    overview.body.evidence_contract_version, " · Observed case span = last minus first observed timestamp; not verified resolution time.");
+
+  const c = cohort.body.result.items[0];
+  const withR = c.cohorts.find((x) => x.cohort === "with_group_return");
+  const withoutR = c.cohorts.find((x) => x.cohort === "without_group_return");
+  const diff = c.distributional_difference;
+  const total = withR.incident_count + withoutR.incident_count;
+  render("kpi-returns",
+    kpi("Incidents with a group return", fmtInt(withR.incident_count), fmtPct(withR.incident_count / total) + " of " + fmtInt(total) + " (share computed in browser)"),
+    kpi("Median span · with return", fmtDuration(diff.with_group_return_median), fmtNum(diff.with_group_return_median, 1) + " s"),
+    kpi("Median span · without return", fmtDuration(diff.without_group_return_median), fmtNum(diff.without_group_return_median, 1) + " s"),
+    kpi("Median ratio", "×" + fmtNum(diff.median_ratio, 2), c.classification.replaceAll("_", " ")));
+  render("chart-cohort", ...cohortChart(c));
+  render("cohort-limitations", h("h3", { text: "Limitations reported by the cohort comparison" }), list(c.limitations));
+
+  const items = findings.body.result.items;
+  const slow = items.filter((f) => f.metric.name === "high_duration_directly_follows_transition")
+    .sort((a, b) => b.measured_statistics.elapsed_seconds_median - a.measured_statistics.elapsed_seconds_median);
+  if (slow.length) {
+    const baseline = slow[0].baseline_or_comparison.statistics.elapsed_seconds_median;
+    render("chart-transitions", ...hbarChart({
+      title: "Slow directly-follows transitions",
+      subtitle: "Median elapsed time",
+      refValue: baseline, refLabel: "All-transition median",
+      valueFormat: fmtDuration,
+      rows: slow.map((f) => ({
+        label: (f.aggregate_population.filters.process_step || f.finding_id).replace(" -> ", " → "),
+        value: f.measured_statistics.elapsed_seconds_median,
+        tooltip: `${fmtDuration(f.measured_statistics.elapsed_seconds_median)} median · p90 ${fmtDuration(f.measured_statistics.elapsed_seconds_p90)} · n=${fmtInt(f.counts.observation_count)}`,
+      })),
+      note: `${slow.length} verified findings, sorted by median in the browser. Elapsed time between consecutive events is not active work time.`,
+    }));
+  } else {
+    render("chart-transitions", h("div", { class: "placeholder", text: "No slow-transition findings in this evidence package." }));
+  }
+
+  const handoffs = items.filter((f) => f.metric.name === "high_frequency_or_repeated_group_handoff")
+    .sort((a, b) => b.measured_statistics.repeated_visit_count - a.measured_statistics.repeated_visit_count).slice(0, 8);
+  if (handoffs.length) {
+    render("chart-handoffs", ...hbarChart({
+      title: "Group handoffs with the most returns",
+      subtitle: "Handoffs into a group already visited in the same incident (top 8)",
+      valueFormat: (v) => fmtInt(v),
+      rows: handoffs.map((f) => ({
+        label: (f.aggregate_population.filters.group_transition || f.finding_id).replace(" -> ", " → "),
+        value: f.measured_statistics.repeated_visit_count,
+        tooltip: `${fmtInt(f.measured_statistics.repeated_visit_count)} of ${fmtInt(f.counts.observation_count)} handoffs (${fmtPct(f.measured_statistics.repeated_visit_rate)} repeated-visit rate)`,
+      })),
+      note: "Routing patterns, not confirmed inefficiency. Sorted in the browser.",
+    }));
+  } else {
+    render("chart-handoffs", h("div", { class: "placeholder", text: "No group-handoff findings in this evidence package." }));
+  }
+  const counts = {};
+  items.forEach((f) => { counts[f.sufficiency_status] = (counts[f.sufficiency_status] || 0) + 1; });
+  $("kpi-provenance").append(" · " + items.length + " findings returned" + (findings.body.result.truncated ? " (truncated)" : "") + ": " +
+    Object.entries(counts).map(([k, v]) => `${v} ${k.replace("_", "-")}`).join(", ") + ".");
+}
+
+// ---------- 2. Recommendation ----------
+function renderInvestigation(inv) {
+  const rec = inv.recommendations[0];
+  const validation = (inv.validation_results || []).find((v) => v.recommendation_id === rec.recommendation_id);
+  const mock = inv.execution_label === "DETERMINISTIC_MOCK_NOT_REAL_AI";
+  $("rec-label").textContent = mock ? "DETERMINISTIC MOCK PROVIDER" : inv.execution_label.replaceAll("_", " ");
+
+  const header = h("div", { class: "actions", style: "margin-bottom:12px" },
+    badge(rec.status, rec.status === "VALIDATED" ? "ok" : "warn"),
+    validation ? badge(validation.valid ? "Evidence check passed" : "Evidence check failed", validation.valid ? "ok" : "err") : null,
+    rec.requires_human_approval ? badge("Requires human approval", "info") : null,
+    h("span", { class: "muted", text: `${inv.tool_calls_used} tool calls · ${inv.iterations_used} iterations · ${inv.final_decision}` }));
+
+  const problem = h("div", { class: "callout info" }, h("strong", { text: "Problem statement" }), rec.problem_statement);
+
+  const facts = h("div", { class: "table-wrap" }, h("table", {},
+    h("caption", { text: "Each value is read from the cited Evidence Contract field." }),
+    h("thead", {}, h("tr", {}, h("th", { text: "Fact" }), h("th", { class: "num", text: "Value" }), h("th", { text: "Source" }))),
+    h("tbody", {}, rec.observed_numerical_facts.map((f) => h("tr", {},
+      h("td", { text: f.statement }), h("td", { class: "num" }, fmtFact(f.value, f.unit)),
+      h("td", {}, idCode(f.evidence_id), h("br"), h("code", { class: "muted", text: f.field_path })))))));
+  const observed = h("div", { class: "rec-sec observed" }, h("h3", {}, badge("OBSERVED", "ok"), "Evidence"), facts,
+    validation ? h("ul", { style: "margin-top:10px" }, validation.notes.map((n) => h("li", { class: "muted", text: n }))) : null);
+
+  const hypoItems = [
+    ...(inv.hypotheses || []).map((x) => h("span", {}, x.statement, " ", x.explicitly_non_causal ? badge("non-causal", "warn") : null)),
+    ...rec.hypotheses,
+  ];
+  const hypotheses = h("div", { class: "rec-sec hypo" }, h("h3", {}, badge("HYPOTHESIS", "warn"), "Possible explanations"),
+    list(hypoItems), h("p", { class: "muted", style: "margin-top:8px", text: "Unverified. Not supported as causes by the current evidence." }));
+
+  const limits = h("div", { class: "rec-sec limits" }, h("h3", {}, badge("LIMITATIONS", "err"), "What the data cannot show"), list(rec.data_limitations));
+
+  const action = h("div", { class: "rec-sec action" }, h("h3", {}, badge("SUGGESTED", "info"), "Actions"),
+    kv([
+      ["Suggested improvement", rec.suggested_process_improvement],
+      ["Expected outcome", rec.expected_outcome_with_uncertainty],
+      ["Follow-up KPI", rec.proposed_follow_up_kpi],
+      ["Implementation risk", rec.implementation_risk],
+    ], "stack"));
+
+  const trace = h("details", {}, h("summary", { text: `Agent trace (${inv.audit_events.length} steps)` }),
+    h("ol", { class: "timeline", style: "margin-top:10px" }, inv.audit_events.map((e) =>
+      h("li", { class: e.outcome === "success" || e.outcome === "accepted" ? "" : "failure" },
+        h("div", { class: "row1" }, h("strong", { text: e.event_type.replaceAll("_", " ") }), badge(e.stage, "neutral"), badge(e.outcome, e.outcome === "failure" ? "err" : "ok")),
+        Object.keys(e.safe_details || {}).length ? h("div", { class: "meta", text: Object.entries(e.safe_details).map(([k, v]) => `${k}: ${typeof v === "object" ? JSON.stringify(v) : v}`).join(" · ") }) : null))));
+
+  render("rec-output", header, problem, h("div", { class: "rec-grid" }, observed, hypotheses, limits, action),
+    h("p", { class: "muted", style: "margin-top:12px" }, "Recommendation ", idCode(rec.recommendation_id), " · run ", h("code", { text: inv.analysis_run_id })),
+    trace, rawJson(inv));
+}
+
+// ---------- 3. Simulation ----------
+function estimate(m) {
+  if (!m) return "—";
+  if (m.status === "ESTIMATED") return h("span", { title: m.explanation }, fmtNum(m.value, 2));
+  return h("span", { title: m.explanation }, badge(m.status.replaceAll("_", " "), "neutral"));
+}
+function renderSimulation(sim) {
+  const b = sim.baseline;
+  const head = h("div", { class: "actions", style: "margin-bottom:12px" },
+    badge(sim.status, sim.status === "ESTIMATED" ? "info" : "neutral"),
+    badge(sim.classification.replaceAll("_", " ").toUpperCase(), "warn"),
+    h("span", { class: "muted", text: sim.engine_version }));
+
+  const hypothesis = h("p", {}, h("strong", { text: "Intervention hypothesis: " }), sim.intervention_hypothesis);
+
+  const scenarios = h("div", { class: "table-wrap" }, h("table", {},
+    h("caption", { text: "Shares are labelled assumptions. Event counts are expected event transitions under those assumptions." }),
+    h("thead", {}, h("tr", {},
+      h("th", { text: "Scenario" }), h("th", { class: "num", text: "Eligible share" }), h("th", { class: "num", text: "Reduction share" }),
+      h("th", { class: "num", text: "Combined" }), h("th", { class: "num", text: "Events avoided" }), h("th", { class: "num", text: "Events remaining" }),
+      h("th", { text: "Incidents affected" }), h("th", { text: "Elapsed time" }), h("th", { text: "SLA" }))),
+    h("tbody", {}, sim.scenarios.map((sc) => h("tr", { class: sc.name === sim.demo_headline_scenario ? "headline" : null },
+      h("td", {}, h("strong", { text: sc.name }), " ", badge("ASSUMPTION", "warn"), sc.name === sim.demo_headline_scenario ? h("div", { class: "muted", text: "headline scenario" }) : null),
+      h("td", { class: "num", text: fmtPct(sc.eligible_event_share_assumption, 0) }),
+      h("td", { class: "num", text: fmtPct(sc.reduction_share_assumption, 0) }),
+      h("td", { class: "num", text: fmtPct(sc.combined_hypothetical_reduction_share, 1) }),
+      h("td", { class: "num" }, estimate(sc.hypothetical_repeated_visit_events_avoided)),
+      h("td", { class: "num" }, estimate(sc.hypothetical_repeated_visit_events_remaining)),
+      h("td", {}, estimate(sc.affected_incident_count)),
+      h("td", {}, estimate(sc.elapsed_time_impact)),
+      h("td", {}, estimate(sc.sla_impact)))))));
+
+  const notEstimable = sim.scenarios[0] ? ["affected_incident_count", "elapsed_time_impact", "sla_impact"]
+    .map((k) => sim.scenarios[0][k]).filter((m) => m && m.status !== "ESTIMATED") : [];
+
+  const baseline = h("div", { class: "panel" }, h("h3", { text: "Observed baseline" }), kv([
+    ["Selected repeated-visit events", fmtInt(b.selected_repeated_group_visit_events) + " (" + b.selected_transition_count_level + ")"],
+    ["All repeated-visit events", fmtInt(b.all_repeated_group_visit_events)],
+    ["All group-change events", fmtInt(b.all_group_change_events)],
+    ["Incidents with repeated visits", fmtInt(b.incidents_with_repeated_group_visits) + " of " + fmtInt(b.total_incidents)],
+  ]));
+  const sens = sim.sensitivity_analysis;
+  const sensitivity = h("div", { class: "panel" }, h("h3", { text: "Sensitivity" }), kv([
+    ["Range of events avoided", fmtNum(sens.minimum_hypothetical_events_avoided) + " – " + fmtNum(sens.maximum_hypothetical_events_avoided)],
+    ["Primary drivers", sens.primary_drivers.join("; ")],
+  ]), h("p", { class: "muted", style: "margin-top:8px", text: sens.interpretation }));
+
+  const warnings = h("div", { class: "callout warn", role: "note", style: "margin-top:14px" },
+    h("strong", { text: "Do not interpret causally" }), list(sim.uncertainty_statements));
+  const notEst = notEstimable.length ? h("div", { class: "callout info" }, h("strong", { text: "Not estimable from aggregate evidence" }),
+    list(notEstimable.map((m) => m.unit + ": " + m.explanation))) : null;
+
+  render("sim-output", head, hypothesis, scenarios,
+    h("div", { class: "grid two", style: "margin-top:14px" }, baseline, sensitivity),
+    warnings, notEst,
+    h("p", { class: "muted" }, "Simulation ", idCode(sim.simulation_id), " · evidence: ",
+      ...sim.evidence_references.flatMap((r, i) => [i ? ", " : "", h("code", { title: r.artifact_sha256, text: r.artifact })])),
+    rawJson(sim));
+}
+
+// ---------- 4. Workflow ----------
+const STATES = ["SUBMITTED", "PENDING_APPROVAL", "APPROVED", "EXECUTED"];
+function renderStepper(state) {
+  const labels = { SUBMITTED: "Recommendation ready", PENDING_APPROVAL: "Pending approval", APPROVED: "Approved", EXECUTED: "Ticket executed" };
+  let idx = -1;
+  if (lastInvestigation) idx = 0;
+  if (state) idx = Math.max(STATES.indexOf(state), idx);
+  const rejected = state === "REJECTED";
+  if (rejected) idx = 2;
+  const items = STATES.map((st, i) => {
+    let cls = i < idx || (i === idx && st === "EXECUTED") ? "done" : i === idx ? "current" : "";
+    let text = labels[st];
+    if (rejected && i === 2) { cls = "stopped"; text = "Rejected (no ticket)"; }
+    return h("li", { class: cls, "aria-current": cls === "current" ? "step" : null, text });
+  });
+  render("wf-stepper", ...items);
+}
+
+function updateRoleHints() {
+  const key = roleKey();
+  render("role-current", "Requests are sent as ", roleChip(key), " ", h("code", { text: ROLES[key].actor }));
+  const mismatch = (required) => key === required ? null : h("div", { class: "callout warn" },
+    "You are acting as ", roleChip(key), ". The backend should reject this action with 403. Try it to see authorization enforced, or switch to ", roleChip(required), ".");
+  render("submit-mismatch", $("submit-recommendation").disabled ? null : mismatch("analyst"));
+  render("decide-mismatch", $("approve-recommendation").disabled ? null : mismatch("owner"));
+}
+
+function approvalSummary(a) {
+  return h("div", { class: "panel", style: "margin-top:10px" }, kv([
+    ["State", badge(a.state, a.state === "REJECTED" ? "err" : a.state === "PENDING_APPROVAL" ? "info" : "ok")],
+    ["Approval request", idCode(a.approval_request_id)],
+    ["Submitted by", actorChip(a.submitted_by)],
+    ["Version", h("span", {}, "v" + a.recommendation_version + " · ", h("code", { title: a.recommendation_version_hash, text: a.recommendation_version_hash.slice(0, 12) + "…" }))],
+    ["Owner / priority", a.proposed_owner + " · " + a.priority],
+    ["Updated", fmtTime(a.updated_at)],
+  ]));
+}
+
+async function submitRecommendation() {
+  if (!lastInvestigation || !lastInvestigation.recommendations || !lastInvestigation.recommendations.length) {
+    render("submit-output", h("div", { class: "callout err", role: "alert", text: "Run the investigation first." }));
+    return;
+  }
+  const recommendation = lastInvestigation.recommendations[0];
+  const nonce = crypto.randomUUID();
+  const result = await callApi("/workflow/recommendations/submit", {
+    method: "POST",
+    body: JSON.stringify({
+      analysis_run_id: lastInvestigation.analysis_run_id,
+      recommendation,
+      tool_call_records: lastInvestigation.tool_call_records || [],
+      proposed_owner: "incident-process-team",
+      priority: "MEDIUM",
+      idempotency_key: "ui-submit-" + nonce,
+      correlation_id: "ui-" + nonce,
+    }),
+  });
+  if (!result.ok) {
+    render("submit-output", errorBox(result, "Submission refused"));
+    if (errorCode(result) === "WORKFLOW_CONFLICT") await loadPending();
+    return;
+  }
+  selectApproval(result.body);
+  render("submit-output", h("p", { style: "margin-top:10px" }, badge("Submitted", "ok"), " by ", actorChip(result.body.submitted_by)), approvalSummary(result.body));
+}
+
+// Decide on a stored approval request; never re-submits its recommendation.
+function selectApproval(a) {
+  currentApproval = {
+    approval_request_id: a.approval_request_id,
+    recommendation_version_hash: a.recommendation_version_hash,
+    correlation_id: a.correlation_id,
+    // One idempotency key per request and decision, so a repeated click replays the
+    // stored decision instead of attempting a second one.
+    decisionKeys: {},
+  };
+  render("decision-output", h("p", { style: "margin-top:10px" }, badge("Selected", "info"), " request ", idCode(a.approval_request_id),
+    " for recommendation ", idCode(a.recommendation_id)), approvalSummary(a));
+  $("approve-recommendation").disabled = false;
+  $("reject-recommendation").disabled = false;
+  renderStepper(a.state);
+  updateRoleHints();
+}
+
+async function loadPending() {
+  if (roleKey() === "admin") {
+    render("pending-output", h("div", { class: "placeholder", text: "Switch to Analyst (own requests) or Process Owner (all requests) to list pending requests." }));
+    return;
+  }
+  loading("pending-output");
+  const result = await callApi("/workflow/approvals/pending");
+  if (!result.ok) { render("pending-output", errorBox(result, "Could not list pending requests")); return; }
+  const nodes = [];
+  if (!result.body.length) {
+    nodes.push(h("div", { class: "placeholder", text: "No request is in PENDING_APPROVAL for the current role." }));
+  } else {
+    nodes.push(h("div", { class: "table-wrap" }, h("table", {},
+      h("caption", { text: result.body.length + " pending request(s)" }),
+      h("thead", {}, h("tr", {}, ["Approval request", "Recommendation", "Submitted by", "Version", "Created", ""].map((t) => h("th", { text: t })))),
+      h("tbody", {}, result.body.map((a) => {
+        const select = h("button", { type: "button", text: "Select" });
+        select.onclick = () => selectApproval(a);
+        return h("tr", {},
+          h("td", {}, idCode(a.approval_request_id)), h("td", {}, idCode(a.recommendation_id)), h("td", {}, actorChip(a.submitted_by)),
+          h("td", {}, "v" + a.recommendation_version + " · ", h("code", { title: a.recommendation_version_hash, text: a.recommendation_version_hash.slice(0, 12) + "…" })),
+          h("td", { text: fmtTime(a.created_at) }), h("td", {}, select));
+      })))));
+  }
+  // Re-read the selected request so the stepper shows its stored state after a decision.
+  if (currentApproval) {
+    const detail = await callApi(`/workflow/approvals/${encodeURIComponent(currentApproval.approval_request_id)}`);
+    if (detail.ok) {
+      nodes.push(h("p", { style: "margin-top:10px" }, badge("Selected request · stored state", "neutral")), approvalSummary(detail.body));
+      renderStepper(detail.body.state);
+    }
+  }
+  render("pending-output", ...nodes);
+}
+
+async function decide(targetPath) {
+  if (!currentApproval) {
+    render("decision-output", h("div", { class: "callout err", role: "alert", text: "Select a pending request or submit a recommendation first." }));
+    return;
+  }
+  currentApproval.decisionKeys[targetPath] ||= "ui-decision-" + crypto.randomUUID();
+  const result = await callApi(`/workflow/approvals/${encodeURIComponent(currentApproval.approval_request_id)}/${targetPath}`, {
+    method: "POST",
+    body: JSON.stringify({
+      recommendation_version_hash: currentApproval.recommendation_version_hash,
+      idempotency_key: currentApproval.decisionKeys[targetPath],
+      correlation_id: currentApproval.correlation_id,
+      reason: $("decision-reason").value.trim() || "Decision recorded via the process optimizer dashboard.",
+    }),
+  });
+  if (!result.ok) {
+    render("decision-output", errorBox(result, (targetPath === "approve" ? "Approval" : "Rejection") + " refused"));
+    return;
+  }
+  render("decision-output", h("p", { style: "margin-top:10px" }, badge(targetPath === "approve" ? "Approved" : "Rejected", targetPath === "approve" ? "ok" : "err"),
+    " by ", roleChip(roleKey()), " ", h("code", { text: ROLES[roleKey()].actor })), approvalSummary(result.body));
+  renderStepper(result.body.state);
+  await loadPending();
+}
+
+// ---------- 5. Tickets ----------
+function renderTickets(tickets) {
+  if (!tickets.length) {
+    render("tickets-output", h("div", { class: "placeholder", text: "No improvement tickets yet. A ticket is created only when a Process Owner approval executes." }));
+    return;
+  }
+  const rows = tickets.map((t) => h("tr", {},
+    h("td", {}, idCode(t.ticket_id), h("div", { class: "muted", text: fmtTime(t.created_at) })),
+    h("td", {}, badge(t.status, t.status === "EXECUTED" ? "ok" : "info")),
+    h("td", { text: t.priority }),
+    h("td", { text: t.proposed_owner }),
+    h("td", {}, h("div", { text: t.process_problem_statement }),
+      h("details", {}, h("summary", { text: "Proposed action and evidence" }),
+        h("p", { text: t.proposed_improvement_action }),
+        h("p", { class: "muted" }, "Evidence: ", ...t.supporting_evidence_references.flatMap((e, i) => [i ? ", " : "", idCode(e)])))),
+    h("td", {}, idCode(t.approval_reference),
+      t.execution_result ? h("div", { class: "muted", text: (t.execution_result.adapter || "") + " · " + (t.execution_result.outcome || "") }) : null)));
+  render("tickets-output", h("div", { class: "table-wrap" }, h("table", {},
+    h("caption", { text: tickets.length + " ticket(s)" }),
+    h("thead", {}, h("tr", {}, ["Ticket", "Status", "Priority", "Owner", "Problem", "Approval / execution"].map((t) => h("th", { text: t })))),
+    h("tbody", {}, rows))));
+}
+
+// ---------- 6. Audit ----------
+function renderAudit(events) {
+  if (!events.length) {
+    render("audit-output", h("div", { class: "placeholder", text: "No audit events recorded yet." }));
+    return;
+  }
+  const sorted = [...events].sort((a, b) => String(a.timestamp).localeCompare(String(b.timestamp)));
+  render("audit-output", h("p", { class: "muted", text: sorted.length + " event(s), oldest first" }),
+    h("ol", { class: "timeline" }, sorted.map((e) => h("li", { class: e.result === "success" ? "" : "failure" },
+      h("div", { class: "row1" }, h("strong", { text: e.action_type.replaceAll("_", " ") }), actorChip(e.actor_id),
+        badge(e.result, e.result === "success" ? "ok" : "err")),
+      h("div", { class: "meta" }, fmtTime(e.timestamp), " · ", e.artifact_type, " ", idCode(e.artifact_id),
+        Object.keys(e.details || {}).length ? " · " + Object.entries(e.details).map(([k, v]) =>
+          `${k}: ${typeof v === "string" && v.length > 24 ? v.slice(0, 12) + "…" : typeof v === "object" ? JSON.stringify(v) : v}`).join(" · ") : "")))));
+}
+
+// ---------- Wiring ----------
+$("refresh-kpis").onclick = loadKpis;
+
+$("run-investigation").onclick = () => withBusy($("run-investigation"), async () => {
+  loading("rec-output", "Running agent investigation…");
+  const result = await callApi("/demo/investigation/group_returns");
+  if (!result.ok) { render("rec-output", errorBox(result, "Investigation failed")); return; }
+  if (!result.body.recommendations || !result.body.recommendations.length) {
+    render("rec-output", h("div", { class: "callout warn", text: "The investigation returned no validated recommendation." }), rawJson(result.body));
+    return;
+  }
+  lastInvestigation = result.body;
+  renderInvestigation(result.body);
+  $("submit-recommendation").disabled = false;
+  if (!currentApproval) renderStepper(null);
+  updateRoleHints();
+});
+
+$("run-simulation").onclick = () => withBusy($("run-simulation"), async () => {
+  loading("sim-output", "Running simulation…");
+  const result = await callApi("/demo/simulation/conservative");
+  if (!result.ok) { render("sim-output", errorBox(result, "Simulation refused")); return; }
+  renderSimulation(result.body);
+});
+
+$("submit-recommendation").onclick = () => withBusy($("submit-recommendation"), submitRecommendation).then(updateRoleHints);
+$("approve-recommendation").onclick = () => withBusy($("approve-recommendation"), () => decide("approve")).then(updateRoleHints);
+$("reject-recommendation").onclick = () => withBusy($("reject-recommendation"), () => decide("reject")).then(updateRoleHints);
+
+$("load-pending").onclick = () => withBusy($("load-pending"), loadPending);
+
+$("load-tickets").onclick = () => withBusy($("load-tickets"), async () => {
+  loading("tickets-output");
+  const result = await callApi("/workflow/tickets");
+  if (!result.ok) { render("tickets-output", errorBox(result, "Could not list tickets")); return; }
+  renderTickets(result.body);
+});
+$("load-audit").onclick = () => withBusy($("load-audit"), async () => {
+  loading("audit-output");
+  const result = await callApi("/workflow/audit");
+  if (!result.ok) { render("audit-output", errorBox(result, "Could not list audit events")); return; }
+  renderAudit(result.body);
+});
+
+document.querySelectorAll('input[name="role"]').forEach((input) => input.addEventListener("change", () => { updateRoleHints(); loadPending(); }));
+
+renderStepper(null);
+updateRoleHints();
+loadStatus();
+loadKpis();
+loadPending();
+</script>
+</body>
+</html>
